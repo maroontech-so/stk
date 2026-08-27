@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LyCash Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --ly-pink: #FF3377;
+            --ly-blue: #00B4DB;
+            --bg-color: #fafafa;
+            --text-main: #1c1c1e;
+            --text-muted: #8e8e93;
+            --card-bg: rgba(255, 255, 255, 0.7);
+        }
+
+        .dark-theme {
+            --bg-color: #000000;
+            --text-main: #ffffff;
+            --text-muted: #a1a1a6;
+            --card-bg: rgba(28, 28, 30, 0.7);
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: background 0.3s ease;
+        }
+        
+        .dark-theme .glass {
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, var(--ly-pink) 0%, var(--ly-blue) 100%);
+            box-shadow: 0 20px 40px -10px rgba(255, 51, 119, 0.4), 0 15px 25px -10px rgba(0, 180, 219, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .apple-shadow {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(-45deg, #ffb3c6, #ffe5ec, #bde0fe, #a2d2ff);
+            background-size: 400% 400%;
+            animation: gradientMesh 15s ease infinite;
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
+        }
+        .mesh-bg.active { opacity: 1; }
+        
+        @keyframes gradientMesh {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes type {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        .typewriter-cursor {
+            display: inline-block;
+            width: 2px;
+            background-color: var(--ly-pink);
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            height: 1.2em;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .ly-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 18px 24px;
+            border-radius: 20px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            color: #1c1c1e;
+            font-size: 1.05rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .dark-theme .ly-input {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .ly-input:focus {
+            border-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 8px 25px rgba(255, 51, 119, 0.15), inset 0 2px 5px rgba(0,0,0,0.01);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+        }
+        .dark-theme .ly-input:focus { background: rgba(0, 0, 0, 0.5); }
+
+        .segmented-control {
+            display: flex;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .segmented-btn {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .segmented-btn.active {
+            background: white;
+            color: var(--ly-pink);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--ly-pink), var(--ly-blue));
+            color: white;
+            box-shadow: 0 10px 25px -5px rgba(255, 51, 119, 0.4);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .btn-primary:active { transform: scale(0.96); box-shadow: 0 5px 15px -5px rgba(255, 51, 119, 0.4); }
+        .btn-primary:hover { box-shadow: 0 15px 35px -5px rgba(255, 51, 119, 0.5); }
+        .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+
+        .ios-toggle {
+            position: relative;
+            width: 50px;
+            height: 30px;
+            -webkit-appearance: none;
+            background: rgba(120, 120, 128, 0.16);
+            outline: none;
+            border-radius: 15px;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        .dark-theme .ios-toggle { background: rgba(120, 120, 128, 0.32); }
+        
+        .ios-toggle:checked { background: var(--ly-pink); }
+        .ios-toggle::before {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            background: #fff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16), 0 3px 1px rgba(0,0,0,0.1);
+            transition: .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .ios-toggle:checked::before { transform: translateX(20px); }
+
+        .numpad-btn {
+            width: 65px; height: 65px;
+            border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 400;
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.15s ease;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        @media (min-width: 380px) {
+            .numpad-btn {
+                width: 75px; height: 75px;
+                font-size: 32px;
+            }
+        }
+        .dark-theme .numpad-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.02); }
+        .numpad-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .numpad-btn.empty { visibility: hidden; }
+        
+        .pin-dot {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--ly-pink);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255,255,255,0.3);
+        }
+        .pin-dot.filled { background: var(--ly-pink); transform: scale(1.15); box-shadow: 0 0 12px rgba(255, 51, 119, 0.5); border-color: transparent; }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+        .view-section { 
+            display: none; 
+            animation: fadeInView 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            min-height: 100vh;
+            width: 100%;
+        }
+        .view-section.active { display: flex; flex-direction: column; }
+        @keyframes fadeInView { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        body.locked-view {
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        body.locked-view .view-section.active {
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        #view-main.active,
+        #view-profile.active {
+            position: relative;
+            height: auto;
+            min-height: 100dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        @media (max-width: 767px) {
+            html,
+            body {
+                width: 100%;
+                height: 100%;
+                overflow-x: hidden;
+                overscroll-behavior: none;
+            }
+
+            body.locked-view {
+                position: fixed;
+                inset: 0;
+                touch-action: none;
+            }
+
+            body.locked-view input,
+            body.locked-view select,
+            body.locked-view textarea,
+            body.locked-view button {
+                touch-action: manipulation;
+            }
+
+            .view-section {
+                min-height: 100dvh;
+                height: 100dvh;
+                overflow: hidden;
+            }
+
+            #view-main,
+            #view-profile {
+                height: auto;
+                min-height: 100dvh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+            }
+
+            .ly-input {
+                padding: 14px 18px;
+                border-radius: 16px;
+                font-size: 1rem;
+            }
+
+            #view-reg-1 form,
+            #view-reg-2 form {
+                padding: 20px;
+                border-radius: 28px;
+            }
+
+            #view-reg-1 form {
+                gap: 1rem;
+            }
+
+            #view-reg-1 button[type="submit"],
+            #view-reg-2 button[type="submit"],
+            #view-reg-2 button[type="button"] {
+                padding-top: 0.875rem;
+                padding-bottom: 0.875rem;
+            }
+
+            #pin-setup-container {
+                padding: 22px;
+                border-radius: 32px;
+            }
+
+            #pin-title {
+                margin-bottom: 1.5rem;
+            }
+
+            #pin-dots {
+                margin-bottom: 2rem;
+            }
+
+            .numpad-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 26px;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            transform: translateY(40px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .dark-theme .modal-card { background: rgba(28, 28, 30, 0.85); border-color: rgba(255,255,255,0.1); }
+        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+
+        .cute-loader-core {
+            width: 70px; height: 70px;
+            background: linear-gradient(135deg, var(--ly-pink), var(--ly-blue));
+            animation: heart-beat 1.5s infinite alternate ease-in-out;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px;
+        }
+        @keyframes heart-beat {
+            0% { transform: scale(0.9); box-shadow: 0 0 10px rgba(255, 51, 119, 0.4); }
+            100% { transform: scale(1.1); box-shadow: 0 0 35px rgba(0, 180, 219, 0.8); }
+        }
+        .cute-loader-wrapper { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
+        .cute-loader-ring-1 { border: 4px solid transparent; border-top-color: var(--ly-pink); animation: simple-spin 1.8s linear infinite; position:absolute; inset:0; border-radius:50%; }
+        .cute-loader-ring-2 { border: 4px solid transparent; border-bottom-color: var(--ly-blue); animation: simple-spin 2.5s linear infinite reverse; position:absolute; inset:15px; border-radius:50%;}
+        @keyframes simple-spin { 100% { transform: rotate(360deg); } }
+
+        /* List groups */
+        .ios-list-group { background: rgba(255,255,255,0.6); border-radius: 16px; overflow: hidden; margin-bottom: 24px; backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); }
+        .dark-theme .ios-list-group { background: rgba(28,28,30,0.6); border-color: rgba(255,255,255,0.1); }
+        .ios-list-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(128,128,128,0.15); }
+        .ios-list-item:last-child { border-bottom: none; }
+        #bio-icon i { display: grid; place-items: center; width: 100%; height: 100%; line-height: 1; }
+    </style>
+</head>
+<body class="relative">
+    <!-- Ambient Background for Auth -->
+    <div id="auth-bg" class="mesh-bg active"></div>
+
+    <div id="view-welcome" class="view-section items-center justify-center p-6">
+        <div class="max-w-md w-full text-center relative z-10 flex flex-col items-center">
+            <div class="w-28 h-28 rounded-[2.5rem] bg-white/40 backdrop-blur-2xl border border-white/60 flex items-center justify-center shadow-2xl mb-10 animate-[float_6s_ease-in-out_infinite]">
+                <i class="fa-solid fa-wallet text-transparent bg-clip-text bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] text-5xl"></i>
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-gray-800 dark:text-white">
+                Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF3377] to-[#00B4DB]">LyCash</span>
+            </h1>
+            
+            <p class="text-xl text-gray-700 dark:text-gray-200 mb-12 font-serif italic min-h-[40px] drop-shadow-sm">
+                Your <span id="typewriter-text" class="text-[#FF3377] font-semibold"></span><span class="typewriter-cursor">|</span> wallet.
+            </p>
+            
+            <button onclick="navTo('view-reg-1')" class="btn-primary w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 group shadow-xl">
+                Get Started
+                <i class="fa-solid fa-arrow-right group-hover:translate-x-1.5 transition-transform duration-300"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="view-reg-1" class="view-section items-center p-5 pt-6 md:pt-10">
+        <div class="max-w-md w-full z-10">
+            <div class="flex items-center justify-between mb-5">
+                <button onclick="navTo('view-welcome')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                    <i class="fa-solid fa-chevron-left text-lg"></i>
+                </button>
+                <span class="text-xs font-bold tracking-widest text-[#FF3377] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 1 of 3</span>
+            </div>
+            
+            <div class="mb-5 px-2">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Let's get to know you</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">Enter your personal details to set up your account securely and professionally.</p>
+            </div>
+            
+            <form id="form-reg-1" class="space-y-5 bg-white/40 backdrop-blur-xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Full Name</label>
+                    <input type="text" id="reg-name" required placeholder="Lydiah Doe" class="ly-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Email Address</label>
+                    <input type="email" id="reg-email" required placeholder="hello@lycash.com" class="ly-input">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Country</label>
+                        <select id="reg-country" class="ly-input appearance-none px-4 bg-white/60" required>
+                            <option value="+254">🇰🇪 +254</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+44">🇬🇧 +44</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Phone</label>
+                        <input type="tel" id="reg-phone" required placeholder="7XX XXX XXX" class="ly-input">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold mt-6 text-lg">
+                    Continue
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-reg-2" class="view-section items-center p-5 pt-6 md:pt-10">
+        <div class="max-w-md w-full z-10">
+            <div class="flex items-center justify-between mb-5">
+                <button onclick="navTo('view-reg-1')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                    <i class="fa-solid fa-chevron-left text-lg"></i>
+                </button>
+                <span class="text-xs font-bold tracking-widest text-[#00B4DB] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 2 of 3</span>
+            </div>
+            
+            <div class="mb-5 px-2">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Receiving Details</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">How would you like to receive funds? You can skip and set this later in your profile.</p>
+            </div>
+            
+            <form id="form-reg-2" class="space-y-5 bg-white/40 backdrop-blur-xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
+                
+                <!-- Toggle Segmented Control -->
+                <div class="segmented-control mb-6">
+                    <div id="seg-till" class="segmented-btn active" onclick="setReceiveMode('till')">Till Number</div>
+                    <div id="seg-paybill" class="segmented-btn" onclick="setReceiveMode('paybill')">Paybill</div>
+                </div>
+
+                <!-- Till Inputs -->
+                <div id="mode-till-inputs" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Business Till Number</label>
+                        <input type="number" id="reg-till" placeholder="e.g. 123456" class="ly-input">
+                    </div>
+                </div>
+
+                <!-- Paybill Inputs -->
+                <div id="mode-paybill-inputs" class="space-y-5 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Paybill Number</label>
+                        <input type="number" id="reg-paybill" placeholder="e.g. 523523" class="ly-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Account Number</label>
+                        <input type="text" id="reg-account" placeholder="e.g. Your Name/Business" class="ly-input">
+                    </div>
+                </div>
+                
+                <div class="pt-6 flex flex-col gap-3">
+                    <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold text-lg">
+                        Continue to Security
+                    </button>
+                    <button type="button" onclick="document.getElementById('form-reg-2').dispatchEvent(new Event('submit'))" class="w-full py-4 rounded-xl font-semibold text-gray-600 bg-white/30 hover:bg-white/50 border border-white/40 transition shadow-sm">
+                        Skip for now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-reg-3" class="view-section items-center p-5 pt-6 md:pt-10">
+        <div class="max-w-md w-full z-10 flex flex-col">
+            
+            <div id="pin-header-nav">
+                <div class="flex items-center justify-between mb-5">
+                    <button onclick="navTo('view-reg-2')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                        <i class="fa-solid fa-chevron-left text-lg"></i>
+                    </button>
+                    <span class="text-xs font-bold tracking-widest text-[#9b59b6] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 3 of 3</span>
+                </div>
+                
+                <div class="mb-5 px-2">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Secure your wallet</h2>
+                    <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">Create a PIN to securely authorize your transactions.</p>
+                </div>
+            </div>
+
+            <!-- Standard PIN Flow -->
+            <div id="pin-setup-container" class="w-full text-center transition-opacity duration-300 bg-white/40 backdrop-blur-xl border border-white/50 p-8 rounded-[3rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
+                <h3 id="pin-title" class="text-2xl font-bold mb-8 tracking-tight text-gray-800 dark:text-white">Enter 4-Digit PIN</h3>
+                
+                <!-- PIN Dots -->
+                <div class="flex justify-center gap-6 mb-12" id="pin-dots">
+                    <div class="pin-dot" id="dot-1"></div>
+                    <div class="pin-dot" id="dot-2"></div>
+                    <div class="pin-dot" id="dot-3"></div>
+                    <div class="pin-dot" id="dot-4"></div>
+                </div>
+
+                <!-- Custom Keyboard -->
+                <div class="grid grid-cols-3 gap-y-4 gap-x-6 sm:gap-y-5 sm:gap-x-8 max-w-[280px] mx-auto">
+                    <button class="numpad-btn" onclick="pressPin(1)">1</button>
+                    <button class="numpad-btn" onclick="pressPin(2)">2</button>
+                    <button class="numpad-btn" onclick="pressPin(3)">3</button>
+                    <button class="numpad-btn" onclick="pressPin(4)">4</button>
+                    <button class="numpad-btn" onclick="pressPin(5)">5</button>
+                    <button class="numpad-btn" onclick="pressPin(6)">6</button>
+                    <button class="numpad-btn" onclick="pressPin(7)">7</button>
+                    <button class="numpad-btn" onclick="pressPin(8)">8</button>
+                    <button class="numpad-btn" onclick="pressPin(9)">9</button>
+                    <button class="numpad-btn empty"></button>
+                    <button class="numpad-btn" onclick="pressPin(0)">0</button>
+                    <button class="numpad-btn text-2xl bg-transparent border-none shadow-none text-gray-500 hover:text-gray-800" onclick="backspacePin()"><i class="fa-solid fa-delete-left"></i></button>
+                </div>
+            </div>
+
+            <!-- Biometrics Prompt (Hidden initially) -->
+            <div id="biometrics-container" class="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-[3rem] p-10 shadow-2xl text-center hidden flex-col items-center transition-opacity duration-500 opacity-0 mt-4">
+                <div class="w-24 h-24 rounded-[2rem] bg-gradient-to-tr from-[#9b59b6] to-[#FF3377] flex items-center justify-center text-white text-5xl mb-8 shadow-[0_15px_30px_rgba(155,89,182,0.4)] animate-[float_4s_ease-in-out_infinite]" id="bio-icon">
+                    <!-- Icon injected by JS -->
+                </div>
+                <h3 class="text-3xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white" id="bio-title">Enable Biometrics?</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm mb-10 leading-relaxed">Log in and verify payments faster and securely without typing your PIN every time.</p>
+                
+                <div class="w-full space-y-4">
+                    <button onclick="finishSetup(true)" class="btn-primary w-full py-4 rounded-xl font-bold text-lg">Use Biometrics</button>
+                    <button onclick="finishSetup(false)" class="w-full py-4 rounded-xl font-semibold text-gray-600 bg-white/40 hover:bg-white/60 border border-white/50 transition shadow-sm">Not Now</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="view-main" class="view-section items-center">
+        <div class="max-w-[1000px] w-full pb-24 p-6 lg:p-10 mx-auto">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <p class="text-base font-semibold text-gray-500 dark:text-gray-400" id="dashboard-greeting">Good Morning,</p>
+                    <h1 class="text-2xl font-bold" id="dashboard-name">User</h1>
+                </div>
+                <button onclick="navTo('view-profile')" class="w-12 h-12 rounded-full glass flex items-center justify-center apple-shadow active:scale-95 transition">
+                    <img src="https://ui-avatars.com/api/?name=User&background=FF3377&color=fff&rounded=true" id="dashboard-avatar" class="w-10 h-10 rounded-full" alt="Profile">
+                </button>
+            </header>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-start">
+                <!-- Left Column: Balance & Actions -->
+                <div class="space-y-8">
+                    <!-- Balance Card -->
+                    <div class="glass-card rounded-[2.5rem] p-8 text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full blur-xl -ml-5 -mb-5"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-6">
+                                <p class="text-white/80 font-medium tracking-wide text-sm">TOTAL BALANCE</p>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" onclick="toggleBalanceVisibility()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 transition flex items-center justify-center text-white/80" aria-label="Hide balance">
+                                        <i id="balance-eye-icon" class="fa-solid fa-eye text-sm"></i>
+                                    </button>
+                                    <i class="fa-solid fa-dollar-sign text-white/50 text-2xl"></i>
+                                </div>
+                            </div>
+                            <h2 class="text-5xl font-bold mb-2 tracking-tight" id="dashboard-balance">KSh 0.00</h2>
+                            <p class="text-white/80 text-sm mb-8" id="dashboard-phone">+254 ••• ••• •••</p>
+                            
+                            <div class="flex space-x-3">
+                                <button onclick="openReceiveModal()" class="flex-1 bg-white/20 hover:bg-white/30 transition backdrop-blur-md py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Top Up
+                                </button>
+                                <button class="flex-1 bg-white text-[#FF3377] hover:bg-gray-50 transition py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+                                    <i class="fa-solid fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Grid -->
+                    <div class="grid grid-cols-4 gap-4">
+                        <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
+                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
+                                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Transfer</span>
+                        </button>
+                        <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
+                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Pay Bill</span>
+                        </button>
+                        <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
+                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
+                                <i class="fa-solid fa-mobile-screen"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Airtime</span>
+                        </button>
+                        <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
+                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">More</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Transactions -->
+                <div class="glass rounded-[2rem] p-6 apple-shadow h-full min-h-[400px] flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg">Recent Activity</h3>
+                        <button class="text-sm font-semibold text-[#FF3377]">See All</button>
+                    </div>
+                    
+                    <div id="transactions-list" class="flex-1 flex flex-col gap-4 overflow-y-auto pr-2">
+                        <!-- Transactions injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view-section items-center">
+        <div class="max-w-[800px] w-full pb-24 p-6 lg:p-10 mx-auto">
+            <header class="flex items-center mb-8 gap-4">
+                <button onclick="navTo('view-main')" class="w-10 h-10 rounded-full glass flex items-center justify-center active:scale-90 transition shadow-sm">
+                    <i class="fa-solid fa-chevron-left text-gray-600"></i>
+                </button>
+                <h1 class="text-3xl font-bold">Profile & Settings</h1>
+            </header>
+
+            <div class="max-w-xl mx-auto space-y-6">
+                <!-- Profile Header -->
+                <div class="flex flex-col items-center justify-center mb-8">
+                    <div class="w-24 h-24 rounded-full glass flex items-center justify-center apple-shadow mb-4 p-1">
+                        <img src="" id="profile-avatar" class="w-full h-full rounded-full" alt="Profile">
+                    </div>
+                    <h2 class="text-2xl font-bold" id="profile-name-display">User Name</h2>
+                    <p class="text-sm text-gray-500 font-medium" id="profile-phone-display">+254 XXX XXX</p>
+                </div>
+
+                <!-- Form to update settings -->
+                <form id="profile-form" class="space-y-6">
+                    <!-- Receiving Details (Matches State) -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Receiving Information</h3>
+                        <div class="ios-list-group">
+                            <div class="ios-list-item">
+                                <span class="font-medium text-sm">Receive Mode</span>
+                                <select id="prof-mode" class="bg-transparent text-right outline-none text-gray-500 focus:text-[#FF3377] font-medium appearance-none">
+                                    <option value="till">Till Number</option>
+                                    <option value="paybill">Paybill</option>
+                                </select>
+                            </div>
+                            <div class="ios-list-item" id="prof-till-container">
+                                <span class="font-medium text-sm">Till Number</span>
+                                <input type="text" id="prof-till" placeholder="e.g. 123456" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
+                            </div>
+                            <div class="ios-list-item hidden" id="prof-paybill-container">
+                                <span class="font-medium text-sm">Paybill Number</span>
+                                <input type="text" id="prof-paybill" placeholder="e.g. 523523" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
+                            </div>
+                            <div class="ios-list-item hidden" id="prof-account-container">
+                                <span class="font-medium text-sm">Account Number</span>
+                                <input type="text" id="prof-account" placeholder="e.g. Name" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Security</h3>
+                        <div class="ios-list-group">
+                            <div class="ios-list-item">
+                                <span class="font-medium text-sm">Require PIN</span>
+                                <input type="checkbox" id="prof-pin-toggle" class="ios-toggle">
+                            </div>
+                            <div class="ios-list-item">
+                                <span class="font-medium text-sm" id="prof-bio-text">Biometrics</span>
+                                <input type="checkbox" id="prof-bio-toggle" class="ios-toggle">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Appearance</h3>
+                        <div class="ios-list-group">
+                            <div class="ios-list-item">
+                                <span class="font-medium text-sm">Dark Mode</span>
+                                <input type="checkbox" id="prof-theme-toggle" class="ios-toggle">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="resetApp()" class="w-full py-4 rounded-xl text-red-500 font-bold bg-white/40 dark:bg-black/40 border border-red-500/20 transform transition active:scale-95 shadow-sm">
+                        Log Out / Reset App
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[80%] max-w-xs glass rounded-[2rem] px-8 py-3 flex justify-between items-center apple-shadow z-50 hidden transition-opacity duration-300">
+        <button onclick="navTo('view-main')" class="nav-btn active flex flex-col items-center gap-1 active:scale-90 transition text-[#FF3377]" data-target="view-main">
+            <i class="fa-solid fa-house text-2xl"></i>
+        </button>
+        
+        <!-- Central QR / Receive Action -->
+        <div class="relative -top-5">
+            <button onclick="openReceiveModal()" class="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] text-white flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(255,51,119,0.4)] hover:scale-105 active:scale-95 transition-transform duration-300">
+                <i class="fa-solid fa-qrcode"></i>
+            </button>
+        </div>
+        
+        <button onclick="navTo('view-profile')" class="nav-btn flex flex-col items-center gap-1 active:scale-90 transition text-gray-400" data-target="view-profile">
+            <i class="fa-solid fa-user text-2xl"></i>
+        </button>
+    </nav>
+
+    <div id="receive-modal" class="modal-overlay">
+        <div class="modal-card w-full max-w-sm rounded-[2rem] p-8 apple-shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Receive Funds</h3>
+                <button onclick="closeReceiveModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Input State -->
+            <div id="modal-input-state">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">From (M-Pesa)</label>
+                        <div class="flex relative">
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">+254</span>
+                            <input type="tel" id="stk-phone" placeholder="7XX XXX XXX" class="ly-input pl-14 font-medium" maxlength="9">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">Amount</label>
+                        <div class="flex relative">
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">KSh</span>
+                            <input type="number" id="stk-amount" placeholder="0.00" class="ly-input pl-14 font-bold text-lg">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="initiateSTKPush()" class="btn-primary w-full mt-8 py-4 rounded-xl font-bold text-lg shadow-lg">
+                    Send Request
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="modal-loading-state" class="hidden py-8 flex flex-col items-center">
+                <div class="cute-loader-wrapper mb-6">
+                    <div class="cute-loader-core"><i class="fa-solid fa-mobile-screen"></i></div>
+                    <div class="cute-loader-ring-1"></div>
+                    <div class="cute-loader-ring-2"></div>
+                </div>
+                <h4 class="font-bold text-lg text-center mb-1">Waiting for User...</h4>
+                <p class="text-sm text-gray-500 text-center animate-pulse">An M-Pesa prompt has been sent.</p>
+            </div>
+
+            <!-- Success State -->
+            <div id="modal-success-state" class="hidden py-8 flex flex-col items-center">
+                <div class="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-green-500 text-4xl mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h4 class="font-bold text-xl text-center mb-1 text-green-600">Payment Received!</h4>
+                <p class="text-sm text-gray-500 text-center" id="success-amount-msg">KSh 0.00 added to balance.</p>
+                <button onclick="closeReceiveModal()" class="mt-8 w-full py-4 rounded-xl bg-gray-100 dark:bg-gray-800 font-bold active:scale-95 transition">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unlock-modal" class="modal-overlay">
+        <div class="modal-card w-full max-w-sm rounded-[2rem] p-8 apple-shadow text-center">
+            <div class="w-20 h-20 mx-auto rounded-[1.75rem] bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] flex items-center justify-center text-white text-3xl mb-6">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2">Unlock LyCash</h3>
+            <p class="text-sm text-gray-500 mb-8">Enter your PIN to continue.</p>
+            <input id="unlock-pin" type="password" inputmode="numeric" maxlength="4" class="ly-input text-center tracking-[0.6em] font-bold" placeholder="••••">
+            <p id="unlock-error" class="text-sm text-red-500 mt-3 min-h-[20px]"></p>
+            <button onclick="unlockWithPin()" class="btn-primary w-full mt-5 py-4 rounded-xl font-bold text-lg">Unlock</button>
+            <button id="unlock-bio-btn" onclick="requestNativeBiometrics('unlock')" class="w-full mt-3 py-4 rounded-xl font-semibold text-gray-600 bg-white/40 hover:bg-white/60 border border-white/50 transition shadow-sm">
+                Use Biometrics
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const defaultState = {
+            isSetupComplete: false,
+            user: {
+                name: '', email: '', country: '+254', phone: '',
+                receiveMode: 'till', // 'till' or 'paybill'
+                till: '', paybill: '', account: '',
+                pin: '', requirePin: true, useBiometrics: false, darkTheme: false
+            },
+            balance: 0,
+            transactions: []
+        };
+
+        let appState = { ...defaultState, ...(JSON.parse(localStorage.getItem('lycash_state')) || {}) };
+        appState.user = { ...defaultState.user, ...(appState.user || {}) };
+        appState.transactions = appState.transactions || [];
+        let currentViewId = localStorage.getItem('lycash_current_view') || '';
+        let isHandlingBrowserBack = false;
+        let isBalanceVisible = localStorage.getItem('lycash_balance_visible') !== 'false';
+        let activeStkTrackingId = null;
+        
+        // Registration Temp State
+        let currentPin = '';
+        let isConfirmingPin = false;
+        let tempPin = '';
+        
+        // UI Text Animation
+        const adjectives = ["classy", "beautiful", "secure", "everyday"];
+        let adjIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        
+        function initTypewriter() {
+            const el = document.getElementById("typewriter-text");
+            if(!el) return;
+            const currentWord = adjectives[adjIndex];
+            
+            if (isDeleting) {
+                el.innerText = currentWord.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                el.innerText = currentWord.substring(0, charIndex + 1);
+                charIndex++;
+            }
+            
+            let speed = isDeleting ? 50 : 120;
+            if (!isDeleting && charIndex === currentWord.length) {
+                speed = 2000; // Pause at end
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                adjIndex = (adjIndex + 1) % adjectives.length;
+                speed = 500; // Pause before typing next
+            }
+            setTimeout(initTypewriter, speed);
+        }
+
+        // Init App
+        document.addEventListener('DOMContentLoaded', () => {
+            initTypewriter();
+            const savedView = getRestorableView();
+            navTo(savedView, false, true);
+            history.replaceState({ viewId: savedView }, '', window.location.href);
+            history.pushState({ viewId: savedView }, '', window.location.href);
+            renderRegistrationProgress();
+            renderApp();
+            syncUserRoom();
+            requestNativeNotificationPermission();
+            if (appState.isSetupComplete && appState.user.requirePin && sessionStorage.getItem('lycash_unlocked') !== 'true') {
+                setTimeout(showUnlockPrompt, 120);
+            }
+        });
+
+        function callNative(action, payload = {}) {
+            const message = { action, payload };
+            if (window.ReactNativeWebView?.postMessage) {
+                window.ReactNativeWebView.postMessage(JSON.stringify(message));
+            } else if (window.webkit?.messageHandlers?.LyCashNative) {
+                window.webkit.messageHandlers.LyCashNative.postMessage(message);
+            } else if (window.LyCashNative?.postMessage) {
+                window.LyCashNative.postMessage(JSON.stringify(message));
+            }
+            window.dispatchEvent(new CustomEvent('lycash:native-request', { detail: message }));
+        }
+
+        window.LyCashWebView = {
+            biometricResult(success) {
+                if (success) unlockApp();
+                else document.getElementById('unlock-error').innerText = 'Biometric verification failed.';
+            },
+            notificationResult(result) {
+                console.log('Native notification permission:', result);
+            },
+            transactionNotification(payload) {
+                callNative('notification.send', payload);
+            }
+        };
+
+        // Navigation Engine
+        function getInitialView() {
+            return appState.isSetupComplete ? 'view-main' : 'view-welcome';
+        }
+
+        function getRestorableView() {
+            const view = document.getElementById(currentViewId) ? currentViewId : getInitialView();
+            if (appState.isSetupComplete) return view;
+            return view === 'view-main' || view === 'view-profile' ? 'view-welcome' : view;
+        }
+
+        function navTo(viewId, animate = true, skipHistory = false) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if(target) target.classList.add('active');
+            currentViewId = target ? viewId : getInitialView();
+            localStorage.setItem('lycash_current_view', currentViewId);
+            
+            const authBg = document.getElementById('auth-bg');
+            const nav = document.getElementById('bottom-nav');
+            const isScrollableView = currentViewId === 'view-main' || currentViewId === 'view-profile';
+            
+            document.body.classList.toggle('locked-view', !isScrollableView);
+            
+            if (isScrollableView) {
+                authBg.classList.remove('active');
+                nav.classList.remove('hidden');
+                setTimeout(() => nav.classList.remove('opacity-0'), 50);
+            } else {
+                authBg.classList.add('active');
+                nav.classList.add('hidden', 'opacity-0');
+            }
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === currentViewId) {
+                    btn.classList.add('active', 'text-[#FF3377]');
+                    btn.classList.remove('text-gray-400');
+                } else {
+                    btn.classList.remove('active', 'text-[#FF3377]');
+                    btn.classList.add('text-gray-400');
+                }
+            });
+
+            if (!skipHistory && !isHandlingBrowserBack) {
+                history.pushState({ viewId: currentViewId }, '', window.location.href);
+            }
+            
+            // Check Biometrics strings if navigating to reg 3
+            if(currentViewId === 'view-reg-3') {
+                checkDeviceBiometrics();
+            }
+        }
+
+        window.addEventListener('popstate', (event) => {
+            isHandlingBrowserBack = true;
+            const targetView = event.state?.viewId || getInitialView();
+            navTo(targetView, false, true);
+            history.pushState({ viewId: targetView }, '', window.location.href);
+            isHandlingBrowserBack = false;
+        });
+
+        // Receive Mode Toggle (Registration)
+        function setReceiveMode(mode) {
+            appState.user.receiveMode = mode;
+            document.getElementById('seg-till').classList.toggle('active', mode === 'till');
+            document.getElementById('seg-paybill').classList.toggle('active', mode === 'paybill');
+            
+            if (mode === 'till') {
+                document.getElementById('mode-till-inputs').classList.remove('hidden');
+                document.getElementById('mode-paybill-inputs').classList.add('hidden');
+            } else {
+                document.getElementById('mode-till-inputs').classList.add('hidden');
+                document.getElementById('mode-paybill-inputs').classList.remove('hidden');
+            }
+        }
+
+        // Form Handlers
+        document.getElementById('form-reg-1').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appState.user.name = document.getElementById('reg-name').value;
+            appState.user.email = document.getElementById('reg-email').value;
+            appState.user.country = document.getElementById('reg-country').value;
+            appState.user.phone = document.getElementById('reg-phone').value;
+            saveState();
+            navTo('view-reg-2');
+        });
+
+        document.getElementById('form-reg-2').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(appState.user.receiveMode === 'till') {
+                appState.user.till = document.getElementById('reg-till').value;
+            } else {
+                appState.user.paybill = document.getElementById('reg-paybill').value;
+                appState.user.account = document.getElementById('reg-account').value;
+            }
+            saveState();
+            // Reset PIN state
+            currentPin = ''; isConfirmingPin = false; tempPin = '';
+            updatePinUI();
+            navTo('view-reg-3');
+        });
+
+        // PIN logic
+        function pressPin(num) {
+            if(currentPin.length < 4) {
+                currentPin += num;
+                updatePinUI();
+                if(currentPin.length === 4) setTimeout(handlePinComplete, 200);
+            }
+        }
+        function backspacePin() {
+            if(currentPin.length > 0) {
+                currentPin = currentPin.slice(0, -1);
+                updatePinUI();
+            }
+        }
+        function updatePinUI() {
+            for(let i=1; i<=4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if(i <= currentPin.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            }
+        }
+        function handlePinComplete() {
+            if(!isConfirmingPin) {
+                tempPin = currentPin;
+                currentPin = '';
+                isConfirmingPin = true;
+                document.getElementById('pin-title').innerText = "Confirm PIN";
+                updatePinUI();
+            } else {
+                if(currentPin === tempPin) {
+                    appState.user.pin = currentPin;
+                    showBiometricsPrompt();
+                } else {
+                    document.getElementById('pin-dots').classList.add('shake');
+                    setTimeout(() => {
+                        document.getElementById('pin-dots').classList.remove('shake');
+                        currentPin = '';
+                        updatePinUI();
+                    }, 400);
+                }
+            }
+        }
+
+        // Biometrics detection & display
+        function checkDeviceBiometrics() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const titleEl = document.getElementById('bio-title');
+            const iconEl = document.getElementById('bio-icon');
+            const profBioText = document.getElementById('prof-bio-text');
+            
+            if(isMobile) {
+                titleEl.innerText = "Face / Fingerprint ID?";
+                iconEl.innerHTML = '<i class="fa-solid fa-fingerprint"></i>';
+                if(profBioText) profBioText.innerText = "Face / Touch ID";
+            } else {
+                titleEl.innerText = "Enable Face ID?";
+                iconEl.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
+                if(profBioText) profBioText.innerText = "Face ID";
+            }
+        }
+
+        function requestNativeBiometrics(reason = 'auth') {
+            callNative('biometrics.request', { reason });
+        }
+
+        function requestNativeNotificationPermission() {
+            callNative('notifications.requestPermission', {});
+        }
+
+        function showUnlockPrompt() {
+            document.getElementById('unlock-modal').classList.add('active');
+            const input = document.getElementById('unlock-pin');
+            input.value = '';
+            document.getElementById('unlock-error').innerText = '';
+            setTimeout(() => input.focus(), 150);
+        }
+
+        function unlockApp() {
+            sessionStorage.setItem('lycash_unlocked', 'true');
+            document.getElementById('unlock-modal').classList.remove('active');
+        }
+
+        function unlockWithPin() {
+            const enteredPin = document.getElementById('unlock-pin').value;
+            if (enteredPin === appState.user.pin) {
+                unlockApp();
+            } else {
+                document.getElementById('unlock-error').innerText = 'Incorrect PIN.';
+            }
+        }
+
+        function showBiometricsPrompt() {
+            document.getElementById('pin-header-nav').classList.add('hidden');
+            document.getElementById('pin-setup-container').classList.add('hidden');
+            const bio = document.getElementById('biometrics-container');
+            bio.classList.remove('hidden');
+            setTimeout(() => bio.classList.remove('opacity-0'), 50);
+        }
+
+        function finishSetup(useBio) {
+            appState.user.useBiometrics = useBio;
+            appState.isSetupComplete = true;
+            saveState();
+            syncUserRoom();
+            sessionStorage.setItem('lycash_unlocked', 'true');
+            if (useBio) requestNativeBiometrics('enable');
+            renderApp();
+            navTo('view-main');
+        }
+
+        function toggleBalanceVisibility() {
+            isBalanceVisible = !isBalanceVisible;
+            localStorage.setItem('lycash_balance_visible', String(isBalanceVisible));
+            renderBalance();
+        }
+
+        function renderBalance() {
+            const balanceEl = document.getElementById('dashboard-balance');
+            const eyeIcon = document.getElementById('balance-eye-icon');
+            if (!balanceEl || !eyeIcon) return;
+
+            const formatMoney = (amt) => 'KSh ' + parseFloat(amt).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            balanceEl.innerText = isBalanceVisible ? formatMoney(appState.balance) : '****';
+            eyeIcon.className = isBalanceVisible ? 'fa-solid fa-eye text-sm' : 'fa-solid fa-eye-slash text-sm';
+            eyeIcon.closest('button')?.setAttribute('aria-label', isBalanceVisible ? 'Hide balance' : 'Show balance');
+        }
+
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Good Morning,';
+            if (hour < 17) return 'Good Afternoon,';
+            if (hour < 21) return 'Good Evening,';
+            return 'Good Night,';
+        }
+
+        async function syncUserRoom() {
+            if (!appState.user.phone) return;
+            try {
+                const res = await fetch('/api/users/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: appState.user })
+                });
+                const data = await res.json();
+                if (!data.success) return;
+                appState.balance = Number(data.user.balance || 0);
+                appState.transactions = (data.transactions || []).map(mapServerTransaction);
+                saveState();
+                renderApp();
+            } catch (error) {
+                console.warn('User room sync failed:', error);
+            }
+        }
+
+        function mapServerTransaction(tx) {
+            return {
+                id: tx.trackingId || tx.id,
+                title: tx.status === 'SUCCESS' ? 'M-Pesa Deposit' : tx.status === 'FAILED' ? 'M-Pesa Failed' : 'M-Pesa Pending',
+                amount: tx.amount,
+                date: tx.createdAt || new Date().toISOString(),
+                type: tx.status === 'SUCCESS' ? 'in' : 'pending',
+                status: tx.status,
+                receiptNumber: tx.receiptNumber,
+                icon: tx.status === 'SUCCESS' ? 'fa-solid fa-arrow-down' : tx.status === 'FAILED' ? 'fa-solid fa-xmark' : 'fa-solid fa-clock',
+                color: tx.status === 'SUCCESS' ? 'linear-gradient(135deg, #10b981, #34d399)' : tx.status === 'FAILED' ? 'linear-gradient(135deg, #ef4444, #fb7185)' : 'linear-gradient(135deg, #f59e0b, #fbbf24)'
+            };
+        }
+
+        function renderRegistrationProgress() {
+            const u = appState.user;
+            document.getElementById('reg-name').value = u.name || '';
+            document.getElementById('reg-email').value = u.email || '';
+            document.getElementById('reg-country').value = u.country || '+254';
+            document.getElementById('reg-phone').value = u.phone || '';
+            document.getElementById('reg-till').value = u.till || '';
+            document.getElementById('reg-paybill').value = u.paybill || '';
+            document.getElementById('reg-account').value = u.account || '';
+            setReceiveMode(u.receiveMode || 'till');
+        }
+
+        // Dashboard Rendering
+        function renderApp() {
+            if (!appState.isSetupComplete) return;
+
+            const u = appState.user;
+            const formatMoney = (amt) => 'KSh ' + parseFloat(amt).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=FF3377&color=fff&rounded=true`;
+
+            // Dashboard
+            document.getElementById('dashboard-greeting').innerText = getGreeting();
+            document.getElementById('dashboard-name').innerText = u.name ? u.name.split(' ')[0] : 'User';
+            document.getElementById('dashboard-avatar').src = avatarUrl;
+            renderBalance();
+            document.getElementById('dashboard-phone').innerText = u.phone || '';
+
+            // Profile
+            document.getElementById('profile-name-display').innerText = u.name || 'User Name';
+            document.getElementById('profile-phone-display').innerText = u.phone || '';
+            document.getElementById('profile-avatar').src = avatarUrl;
+            
+            // Profile Form Binding
+            document.getElementById('prof-mode').value = u.receiveMode || 'till';
+            toggleProfileMode(u.receiveMode || 'till');
+            
+            document.getElementById('prof-till').value = u.till || '';
+            document.getElementById('prof-paybill').value = u.paybill || '';
+            document.getElementById('prof-account').value = u.account || '';
+            
+            document.getElementById('prof-pin-toggle').checked = u.requirePin;
+            document.getElementById('prof-bio-toggle').checked = u.useBiometrics;
+            document.getElementById('prof-theme-toggle').checked = u.darkTheme;
+
+            // Apply Theme
+            if (u.darkTheme) document.body.classList.add('dark-theme');
+            else document.body.classList.remove('dark-theme');
+
+            renderTransactions();
+        }
+
+        // Profile Interactions
+        function toggleProfileMode(mode) {
+            appState.user.receiveMode = mode;
+            if(mode === 'till') {
+                document.getElementById('prof-till-container').classList.remove('hidden');
+                document.getElementById('prof-paybill-container').classList.add('hidden');
+                document.getElementById('prof-account-container').classList.add('hidden');
+            } else {
+                document.getElementById('prof-till-container').classList.add('hidden');
+                document.getElementById('prof-paybill-container').classList.remove('hidden');
+                document.getElementById('prof-account-container').classList.remove('hidden');
+            }
+            saveState();
+        }
+
+        document.getElementById('prof-mode').addEventListener('change', (e) => { toggleProfileMode(e.target.value); syncUserRoom(); });
+        document.getElementById('prof-till').addEventListener('change', (e) => { appState.user.till = e.target.value; saveState(); syncUserRoom(); });
+        document.getElementById('prof-paybill').addEventListener('change', (e) => { appState.user.paybill = e.target.value; saveState(); syncUserRoom(); });
+        document.getElementById('prof-account').addEventListener('change', (e) => { appState.user.account = e.target.value; saveState(); syncUserRoom(); });
+        
+        document.getElementById('prof-pin-toggle').addEventListener('change', (e) => {
+            appState.user.requirePin = e.target.checked;
+            if (e.target.checked) sessionStorage.removeItem('lycash_unlocked');
+            saveState();
+            syncUserRoom();
+        });
+        document.getElementById('prof-bio-toggle').addEventListener('change', (e) => {
+            appState.user.useBiometrics = e.target.checked;
+            saveState();
+            syncUserRoom();
+            if (e.target.checked) requestNativeBiometrics('enable');
+        });
+        document.getElementById('prof-theme-toggle').addEventListener('change', (e) => { appState.user.darkTheme = e.target.checked; renderApp(); saveState(); syncUserRoom(); });
+
+        function saveState() { localStorage.setItem('lycash_state', JSON.stringify(appState)); }
+
+        function resetApp() {
+            if(confirm("Are you sure you want to log out and reset the app?")) {
+                localStorage.removeItem('lycash_state');
+                localStorage.removeItem('lycash_current_view');
+                location.reload();
+            }
+        }
+
+        // Transactions
+        function renderTransactions() {
+            const list = document.getElementById('transactions-list');
+            list.innerHTML = '';
+            if (appState.transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="flex-1 flex flex-col items-center justify-center text-center opacity-60 mt-8">
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-2xl">👻</div>
+                        <p class="font-medium text-gray-500">No activity yet</p>
+                        <p class="text-xs text-gray-400 mt-1">Your recent transactions will appear here.</p>
+                    </div>`;
+                return;
+            }
+            const sorted = [...appState.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sorted.forEach(tx => {
+                const isPos = tx.type === 'in';
+                const isPending = tx.status === 'PENDING' || tx.type === 'pending';
+                const sign = isPos ? '+' : '';
+                const colorClass = isPos ? 'text-green-500' : isPending ? 'text-amber-500' : 'text-red-500';
+                const time = new Date(tx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                list.innerHTML += `
+                    <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/5 transition cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md" style="background: ${tx.color};">
+                                <i class="${tx.icon}"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm">${tx.title}</h4>
+                                <p class="text-xs text-gray-500">${time}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold ${colorClass}">${sign}KSh ${parseFloat(tx.amount).toLocaleString()}</p>
+                            ${tx.status ? `<p class="text-[10px] uppercase tracking-wide text-gray-400">${tx.status}</p>` : ''}
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Modal Logic
+        function openReceiveModal() {
+            document.getElementById('receive-modal').classList.add('active');
+            if(!document.getElementById('stk-phone').value && appState.user.phone) {
+                const p = appState.user.phone;
+                const normalized = p.replace(/\D/g, '');
+                document.getElementById('stk-phone').value = normalized.startsWith('254') ? normalized.substring(3) : normalized.replace(/^0/, '');
+            }
+        }
+
+        function closeReceiveModal() {
+            document.getElementById('receive-modal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('modal-input-state').classList.remove('hidden');
+                document.getElementById('modal-loading-state').classList.add('hidden');
+                document.getElementById('modal-success-state').classList.add('hidden');
+                document.getElementById('stk-amount').value = '';
+                activeStkTrackingId = null;
+            }, 300);
+        }
+
+        async function initiateSTKPush() {
+            const amount = parseFloat(document.getElementById('stk-amount').value);
+            const phoneInput = document.getElementById('stk-phone').value.trim();
+            if (!amount || amount <= 0) return;
+            if (!phoneInput) return;
+
+            document.getElementById('modal-input-state').classList.add('hidden');
+            document.getElementById('modal-loading-state').classList.remove('hidden');
+            document.querySelector('#modal-loading-state p').innerText = 'Sending M-Pesa prompt...';
+
+            try {
+                const res = await fetch('/api/stk-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: phoneInput,
+                        amount,
+                        accountReference: `LYCASH-${Date.now().toString().slice(-6)}`,
+                        transactionDesc: 'LyCash wallet top up',
+                        user: appState.user
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Failed to start STK push.');
+
+                activeStkTrackingId = data.trackingId;
+                appState.transactions.unshift(mapServerTransaction({
+                    trackingId: data.trackingId,
+                    amount: data.amount,
+                    status: 'PENDING',
+                    createdAt: new Date().toISOString()
+                }));
+                saveState();
+                renderApp();
+                pollSTKStatus(data.trackingId, amount);
+            } catch (error) {
+                showSTKError(error.message || 'Could not send M-Pesa prompt.');
+            }
+        }
+
+        function pollSTKStatus(trackingId, amount) {
+            let attempts = 0;
+            document.querySelector('#modal-loading-state p').innerText = 'Check your phone and enter your M-Pesa PIN.';
+            const poll = setInterval(async () => {
+                attempts += 1;
+                try {
+                    const res = await fetch(`/api/status/${trackingId}`);
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Unable to verify payment.');
+
+                    if (data.status === 'SUCCESS') {
+                        clearInterval(poll);
+                        appState.balance = Number(data.balance || appState.balance);
+                        await syncUserRoom();
+                        document.getElementById('modal-loading-state').classList.add('hidden');
+                        document.getElementById('modal-success-state').classList.remove('hidden');
+                        document.getElementById('success-amount-msg').innerText = `KSh ${amount.toLocaleString()} added to balance.`;
+                        window.LyCashWebView.transactionNotification({
+                            title: 'Payment received',
+                            body: `KSh ${amount.toLocaleString()} added to your LyCash wallet.`
+                        });
+                        return;
+                    }
+
+                    if (data.status === 'FAILED') {
+                        clearInterval(poll);
+                        await syncUserRoom();
+                        showSTKError(data.resultDesc || 'The transaction failed or was cancelled.');
+                        return;
+                    }
+
+                    if (attempts >= 24) {
+                        clearInterval(poll);
+                        await syncUserRoom();
+                        showSTKError('Payment is still pending. Your balance will update after confirmation.');
+                    }
+                } catch (error) {
+                    clearInterval(poll);
+                    showSTKError(error.message || 'Could not verify payment.');
+                }
+            }, 2500);
+        }
+
+        function showSTKError(message) {
+            document.getElementById('modal-loading-state').classList.add('hidden');
+            document.getElementById('modal-input-state').classList.remove('hidden');
+            alert(message);
+        }
+    </script>
+</body>
+</html>

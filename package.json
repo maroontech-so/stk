@@ -1,0 +1,24 @@
+{
+  "name": "palpluss-stk-push",
+  "version": "1.0.0",
+  "description": "Simple M-Pesa STK Push integration using PalPluss API and Express",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "mpesa",
+    "stk-push",
+    "palpluss",
+    "payments",
+    "kenya"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
