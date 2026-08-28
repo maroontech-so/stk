@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LyCash Wallet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --ly-pink: #FF3377;
             --ly-blue: #00B4DB;
@@ -17,6 +25,8 @@
             --text-main: #1c1c1e;
             --text-muted: #8e8e93;
             --card-bg: rgba(255, 255, 255, 0.7);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         .dark-theme {
@@ -26,6 +36,7 @@
             --card-bg: rgba(28, 28, 30, 0.7);
         }
 
+        html,
         body {
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -34,7 +45,9 @@
             -moz-osx-font-smoothing: grayscale;
             margin: 0;
             padding: 0;
+            width: 100%;
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -46,7 +59,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: background 0.3s ease;
         }
-        
+
         .dark-theme .glass {
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
@@ -61,7 +74,10 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
         }
 
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
 
         .mesh-bg {
             position: fixed;
@@ -74,35 +90,36 @@
             transition: opacity 1s ease;
             pointer-events: none;
         }
-        .mesh-bg.active { opacity: 1; }
-        
+
+        .mesh-bg.active {
+            opacity: 1;
+        }
+
         @keyframes gradientMesh {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(2deg); }
-        }
 
-        @keyframes type {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-        
-        .typewriter-cursor {
-            display: inline-block;
-            width: 2px;
-            background-color: var(--ly-pink);
-            animation: blink 1s step-end infinite;
-            margin-left: 2px;
-            vertical-align: text-bottom;
-            height: 1.2em;
-        }
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
 
-        @keyframes blink { 50% { opacity: 0; } }
+            50% {
+                transform: translateY(-12px) rotate(2deg);
+            }
+        }
 
         .ly-input {
             width: 100%;
@@ -114,20 +131,25 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             color: #1c1c1e;
             font-size: 1.05rem;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.02);
         }
+
         .dark-theme .ly-input {
             background: rgba(255, 255, 255, 0.05);
             color: white;
             border-color: rgba(255, 255, 255, 0.1);
         }
+
         .ly-input:focus {
             border-color: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 8px 25px rgba(255, 51, 119, 0.15), inset 0 2px 5px rgba(0,0,0,0.01);
+            box-shadow: 0 8px 25px rgba(255, 51, 119, 0.15), inset 0 2px 5px rgba(0, 0, 0, 0.01);
             background: rgba(255, 255, 255, 0.95);
             transform: translateY(-2px);
         }
-        .dark-theme .ly-input:focus { background: rgba(0, 0, 0, 0.5); }
+
+        .dark-theme .ly-input:focus {
+            background: rgba(0, 0, 0, 0.5);
+        }
 
         .segmented-control {
             display: flex;
@@ -137,6 +159,7 @@
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
+
         .segmented-btn {
             flex: 1;
             padding: 12px 0;
@@ -148,10 +171,11 @@
             transition: all 0.3s ease;
             cursor: pointer;
         }
+
         .segmented-btn.active {
             background: white;
             color: var(--ly-pink);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
         .btn-primary {
@@ -160,9 +184,20 @@
             box-shadow: 0 10px 25px -5px rgba(255, 51, 119, 0.4);
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .btn-primary:active { transform: scale(0.96); box-shadow: 0 5px 15px -5px rgba(255, 51, 119, 0.4); }
-        .btn-primary:hover { box-shadow: 0 15px 35px -5px rgba(255, 51, 119, 0.5); }
-        .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+            box-shadow: 0 5px 15px -5px rgba(255, 51, 119, 0.4);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 15px 35px -5px rgba(255, 51, 119, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
 
         .ios-toggle {
             position: relative;
@@ -175,9 +210,15 @@
             transition: background 0.3s;
             cursor: pointer;
         }
-        .dark-theme .ios-toggle { background: rgba(120, 120, 128, 0.32); }
-        
-        .ios-toggle:checked { background: var(--ly-pink); }
+
+        .dark-theme .ios-toggle {
+            background: rgba(120, 120, 128, 0.32);
+        }
+
+        .ios-toggle:checked {
+            background: var(--ly-pink);
+        }
+
         .ios-toggle::before {
             content: '';
             position: absolute;
@@ -187,115 +228,151 @@
             top: 2px;
             left: 2px;
             background: #fff;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16), 0 3px 1px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16), 0 3px 1px rgba(0, 0, 0, 0.1);
             transition: .3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .ios-toggle:checked::before { transform: translateX(20px); }
 
-        .numpad-btn {
-            width: 65px; height: 65px;
-            border-radius: 50%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 28px; font-weight: 400;
-            background: rgba(255,255,255,0.25);
-            border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(10px);
-            transition: all 0.15s ease;
-            cursor: pointer;
-            color: var(--text-main);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        .ios-toggle:checked::before {
+            transform: translateX(20px);
         }
-        @media (min-width: 380px) {
-            .numpad-btn {
-                width: 75px; height: 75px;
-                font-size: 32px;
+
+        .pin-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2.5px solid var(--ly-pink);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .pin-dot.filled {
+            background: var(--ly-pink);
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(255, 51, 119, 0.5);
+            border-color: transparent;
+        }
+
+        .pin-dot.filled::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .pin-dots-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-8px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(8px);
             }
         }
-        .dark-theme .numpad-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.02); }
-        .numpad-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .numpad-btn.empty { visibility: hidden; }
-        
-        .pin-dot {
-            width: 18px; height: 18px;
-            border-radius: 50%;
-            border: 2px solid var(--ly-pink);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(255,255,255,0.3);
-        }
-        .pin-dot.filled { background: var(--ly-pink); transform: scale(1.15); box-shadow: 0 0 12px rgba(255, 51, 119, 0.5); border-color: transparent; }
-        
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
 
-        .view-section { 
-            display: none; 
-            animation: fadeInView 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); 
-            min-height: 100vh;
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeInView 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
             width: 100%;
-        }
-        .view-section.active { display: flex; flex-direction: column; }
-        @keyframes fadeInView { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-
-        body.locked-view {
-            overflow: hidden;
-            overscroll-behavior: none;
+            min-height: 100dvh;
         }
 
-        body.locked-view .view-section.active {
-            height: 100dvh;
-            overflow: hidden;
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeInView {
+            from {
+                opacity: 0;
+                transform: scale(0.98) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         #view-main.active,
         #view-profile.active {
             position: relative;
-            height: auto;
+            height: 100dvh;
             min-height: 100dvh;
             overflow-y: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
+            touch-action: pan-y;
+            padding-bottom: 100px;
+        }
+
+        .view-section.fixed-view.active {
+            position: fixed;
+            inset: 0;
+            width: 100dvw;
+            height: 100dvh;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            z-index: 10;
+        }
+
+        .view-section.fixed-view .fixed-content {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            padding-top: calc(20px + var(--safe-top));
+            padding-bottom: calc(20px + var(--safe-bottom));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+        }
+
+        body.locked-view {
+            overflow: hidden;
+            overscroll-behavior: none;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
         }
 
         @media (max-width: 767px) {
-            html,
-            body {
-                width: 100%;
-                height: 100%;
-                overflow-x: hidden;
-                overscroll-behavior: none;
-            }
-
-            body.locked-view {
-                position: fixed;
-                inset: 0;
-                touch-action: none;
-            }
-
-            body.locked-view input,
-            body.locked-view select,
-            body.locked-view textarea,
-            body.locked-view button {
-                touch-action: manipulation;
-            }
-
-            .view-section {
-                min-height: 100dvh;
-                height: 100dvh;
-                overflow: hidden;
-            }
-
-            #view-main,
-            #view-profile {
-                height: auto;
-                min-height: 100dvh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                overscroll-behavior-y: contain;
+            .view-section.fixed-view .fixed-content {
+                padding: 16px;
+                padding-top: calc(16px + var(--safe-top));
+                padding-bottom: calc(16px + var(--safe-bottom));
             }
 
             .ly-input {
@@ -304,248 +381,1029 @@
                 font-size: 1rem;
             }
 
-            #view-reg-1 form,
-            #view-reg-2 form {
-                padding: 20px;
-                border-radius: 28px;
+            .pin-dots-container {
+                gap: 16px;
+                margin-bottom: 30px;
             }
 
-            #view-reg-1 form {
-                gap: 1rem;
+            .pin-dot {
+                width: 20px;
+                height: 20px;
             }
 
-            #view-reg-1 button[type="submit"],
-            #view-reg-2 button[type="submit"],
-            #view-reg-2 button[type="button"] {
-                padding-top: 0.875rem;
-                padding-bottom: 0.875rem;
-            }
-
-            #pin-setup-container {
-                padding: 22px;
-                border-radius: 32px;
-            }
-
-            #pin-title {
-                margin-bottom: 1.5rem;
-            }
-
-            #pin-dots {
-                margin-bottom: 2rem;
-            }
-
-            .numpad-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 26px;
+            #view-main.active,
+            #view-profile.active {
+                padding-bottom: 90px;
             }
         }
 
+        /* MODALS */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
-            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.4s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 20px;
         }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* UNLOCK MODAL - Full Screen */
+        #unlock-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        #unlock-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .unlock-card {
+            width: 100%;
+            max-width: 380px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 40px;
+            padding: 30px 24px 28px;
+            text-align: center;
+            transform: scale(0.95) translateY(10px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        #unlock-modal.active .unlock-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .dark-theme .unlock-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .unlock-lock-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--ly-pink), var(--ly-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 12px 30px rgba(255, 51, 119, 0.3);
+        }
+
+        .unlock-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+            letter-spacing: -0.3px;
+        }
+
+        .unlock-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+        }
+
+        .unlock-pin-dots {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .unlock-pin-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2.5px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .unlock-pin-dot.filled {
+            background: white;
+            border-color: white;
+            transform: scale(1.15);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+        }
+
+        .unlock-pin-dot.filled::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .unlock-numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .unlock-numpad-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: white;
+            font-size: 24px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 52px;
+            position: relative;
+        }
+
+        .unlock-numpad-btn:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .unlock-numpad-btn .bio-icon {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .unlock-numpad-btn .bio-icon:active {
+            color: white;
+        }
+
+        .unlock-numpad-btn.empty {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .unlock-numpad-btn.backspace {
+            background: transparent;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .unlock-numpad-btn.backspace:active {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .unlock-error {
+            color: #fb7185;
+            font-size: 12px;
+            min-height: 20px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        @keyframes unlockShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-8px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(8px);
+            }
+        }
+
+        .unlock-shake {
+            animation: unlockShake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
         .modal-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(24px);
             transform: translateY(40px) scale(0.95);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255,255,255,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
-        .dark-theme .modal-card { background: rgba(28, 28, 30, 0.85); border-color: rgba(255,255,255,0.1); }
-        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+
+        .dark-theme .modal-card {
+            background: rgba(28, 28, 30, 0.85);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: translateY(0) scale(1);
+        }
 
         .cute-loader-core {
-            width: 70px; height: 70px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, var(--ly-pink), var(--ly-blue));
             animation: heart-beat 1.5s infinite alternate ease-in-out;
             border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
         }
-        @keyframes heart-beat {
-            0% { transform: scale(0.9); box-shadow: 0 0 10px rgba(255, 51, 119, 0.4); }
-            100% { transform: scale(1.1); box-shadow: 0 0 35px rgba(0, 180, 219, 0.8); }
-        }
-        .cute-loader-wrapper { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
-        .cute-loader-ring-1 { border: 4px solid transparent; border-top-color: var(--ly-pink); animation: simple-spin 1.8s linear infinite; position:absolute; inset:0; border-radius:50%; }
-        .cute-loader-ring-2 { border: 4px solid transparent; border-bottom-color: var(--ly-blue); animation: simple-spin 2.5s linear infinite reverse; position:absolute; inset:15px; border-radius:50%;}
-        @keyframes simple-spin { 100% { transform: rotate(360deg); } }
 
-        /* List groups */
-        .ios-list-group { background: rgba(255,255,255,0.6); border-radius: 16px; overflow: hidden; margin-bottom: 24px; backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); }
-        .dark-theme .ios-list-group { background: rgba(28,28,30,0.6); border-color: rgba(255,255,255,0.1); }
-        .ios-list-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(128,128,128,0.15); }
-        .ios-list-item:last-child { border-bottom: none; }
-        #bio-icon i { display: grid; place-items: center; width: 100%; height: 100%; line-height: 1; }
+        @keyframes heart-beat {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 10px rgba(255, 51, 119, 0.4);
+            }
+
+            100% {
+                transform: scale(1.1);
+                box-shadow: 0 0 35px rgba(0, 180, 219, 0.8);
+            }
+        }
+
+        .cute-loader-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cute-loader-ring-1 {
+            border: 4px solid transparent;
+            border-top-color: var(--ly-pink);
+            animation: simple-spin 1.8s linear infinite;
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+        }
+
+        .cute-loader-ring-2 {
+            border: 4px solid transparent;
+            border-bottom-color: var(--ly-blue);
+            animation: simple-spin 2.5s linear infinite reverse;
+            position: absolute;
+            inset: 15px;
+            border-radius: 50%;
+        }
+
+        @keyframes simple-spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ios-list-group {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .dark-theme .ios-list-group {
+            background: rgba(28, 28, 30, 0.6);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .ios-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+            cursor: pointer;
+        }
+
+        .ios-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .ios-list-item:active {
+            background: rgba(128, 128, 128, 0.05);
+        }
+
+        #bio-icon i {
+            display: grid;
+            place-items: center;
+            width: 100%;
+            height: 100%;
+            line-height: 1;
+        }
+
+        /* OFFLINE BADGE */
+        #offline-badge {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            pointer-events: none;
+            background: rgba(239, 68, 68, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            letter-spacing: 0.3px;
+            transition: opacity 0.25s ease;
+        }
+
+        #offline-badge.show {
+            display: flex;
+        }
+
+        #offline-badge i {
+            font-size: 0.8rem;
+        }
+
+        .dark-theme #offline-badge {
+            background: rgba(220, 38, 38, 0.92);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            width: 90%;
+            max-width: 380px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 8px;
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-success {
+            border-left: 4px solid #34d399;
+        }
+
+        .toast-error {
+            border-left: 4px solid #fb7185;
+        }
+
+        .toast-info {
+            border-left: 4px solid #60a5fa;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #fbbf24;
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast-success i {
+            color: #34d399;
+        }
+
+        .toast-error i {
+            color: #fb7185;
+        }
+
+        .toast-info i {
+            color: #60a5fa;
+        }
+
+        .toast-warning i {
+            color: #fbbf24;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+        }
+
+        .toast-out {
+            animation: toastOut 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .numpad-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 400;
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.15s ease;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (min-width: 380px) {
+            .numpad-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+        }
+
+        .dark-theme .numpad-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .numpad-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .numpad-btn.empty {
+            visibility: hidden;
+        }
+
+        .profile-update-modal .modal-card {
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .profile-update-modal .modal-card .ly-input {
+            font-size: 0.95rem;
+            padding: 14px 18px;
+        }
+
+        #bottom-nav {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 360px;
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transition: opacity 0.3s ease;
+        }
+
+        .dark-theme #bottom-nav {
+            border-color: rgba(255, 255, 255, 0.05);
+            background: rgba(28, 28, 30, 0.7);
+        }
+
+        #bottom-nav.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        #bottom-nav:not(.hidden) {
+            display: flex;
+            opacity: 1;
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #8e8e93;
+            font-size: 12px;
+            font-weight: 500;
+            touch-action: manipulation;
+        }
+
+        .nav-btn:active {
+            transform: scale(0.92);
+        }
+
+        .nav-btn.active {
+            color: var(--ly-pink);
+        }
+
+        .nav-btn i {
+            font-size: 22px;
+        }
+
+        .nav-btn span {
+            font-size: 10px;
+        }
+
+        .nav-center-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--ly-pink), var(--ly-blue));
+            border: none;
+            color: white;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(255, 51, 119, 0.35);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: -20px;
+            touch-action: manipulation;
+        }
+
+        .nav-center-btn:active {
+            transform: scale(0.92);
+        }
+
+        #view-welcome.fixed-view.active,
+        #view-reg-1.fixed-view.active,
+        #view-reg-2.fixed-view.active,
+        #view-reg-3.fixed-view.active {
+            position: fixed;
+            inset: 0;
+            width: 100dvw;
+            height: 100dvh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        #view-welcome .fixed-content,
+        #view-reg-1 .fixed-content,
+        #view-reg-2 .fixed-content,
+        #view-reg-3 .fixed-content {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            padding-top: calc(20px + var(--safe-top));
+            padding-bottom: calc(20px + var(--safe-bottom));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            height: 100%;
+        }
+
+        @media (max-width: 480px) {
+
+            #view-welcome .fixed-content,
+            #view-reg-1 .fixed-content,
+            #view-reg-2 .fixed-content,
+            #view-reg-3 .fixed-content {
+                padding: 16px;
+                padding-top: calc(16px + var(--safe-top));
+                padding-bottom: calc(16px + var(--safe-bottom));
+                max-width: 100%;
+            }
+
+            .unlock-numpad-btn {
+                min-height: 46px;
+                font-size: 20px;
+            }
+
+            .unlock-numpad-btn .bio-icon {
+                font-size: 20px;
+            }
+
+            .unlock-pin-dot {
+                width: 18px;
+                height: 18px;
+            }
+
+            .unlock-pin-dots {
+                gap: 14px;
+            }
+
+            .unlock-card {
+                padding: 24px 18px 20px;
+                border-radius: 32px;
+            }
+
+            .unlock-lock-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .unlock-title {
+                font-size: 18px;
+            }
+
+            .unlock-subtitle {
+                font-size: 12px;
+            }
+
+            .unlock-numpad {
+                gap: 8px;
+                max-width: 220px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .unlock-numpad {
+                gap: 6px;
+                max-width: 190px;
+            }
+
+            .unlock-numpad-btn {
+                min-height: 40px;
+                font-size: 18px;
+            }
+
+            .unlock-numpad-btn .bio-icon {
+                font-size: 18px;
+            }
+
+            .unlock-pin-dot {
+                width: 16px;
+                height: 16px;
+            }
+
+            .unlock-pin-dots {
+                gap: 12px;
+            }
+
+            .unlock-card {
+                padding: 20px 14px 16px;
+                border-radius: 28px;
+            }
+        }
+
+        @media (min-width: 768px) {
+
+            #view-welcome .fixed-content,
+            #view-reg-1 .fixed-content,
+            #view-reg-2 .fixed-content,
+            #view-reg-3 .fixed-content {
+                padding: 30px;
+            }
+
+            .unlock-numpad-btn {
+                min-height: 60px;
+                font-size: 26px;
+            }
+
+            .unlock-numpad-btn .bio-icon {
+                font-size: 26px;
+            }
+
+            .unlock-numpad {
+                max-width: 280px;
+                gap: 12px;
+            }
+
+            .unlock-pin-dot {
+                width: 24px;
+                height: 24px;
+            }
+
+            .unlock-pin-dots {
+                gap: 20px;
+            }
+
+            .unlock-card {
+                padding: 35px 30px 30px;
+                border-radius: 44px;
+            }
+        }
     </style>
 </head>
-<body class="relative">
-    <!-- Ambient Background for Auth -->
-    <div id="auth-bg" class="mesh-bg active"></div>
 
-    <div id="view-welcome" class="view-section items-center justify-center p-6">
-        <div class="max-w-md w-full text-center relative z-10 flex flex-col items-center">
-            <div class="w-28 h-28 rounded-[2.5rem] bg-white/40 backdrop-blur-2xl border border-white/60 flex items-center justify-center shadow-2xl mb-10 animate-[float_6s_ease-in-out_infinite]">
-                <i class="fa-solid fa-wallet text-transparent bg-clip-text bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] text-5xl"></i>
+<body>
+    <div id="auth-bg" class="mesh-bg"></div>
+
+    <div id="offline-badge">
+        <i class="fa-solid fa-wifi"></i>
+        Offline
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- UNLOCK MODAL - Full Screen -->
+    <div id="unlock-modal">
+        <div class="unlock-card" id="unlock-card">
+            <div class="unlock-lock-icon">
+                <i class="fa-solid fa-lock"></i>
             </div>
-            
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-gray-800 dark:text-white">
-                Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF3377] to-[#00B4DB]">LyCash</span>
-            </h1>
-            
-            <p class="text-xl text-gray-700 dark:text-gray-200 mb-12 font-serif italic min-h-[40px] drop-shadow-sm">
-                Your <span id="typewriter-text" class="text-[#FF3377] font-semibold"></span><span class="typewriter-cursor">|</span> wallet.
-            </p>
-            
-            <button onclick="navTo('view-reg-1')" class="btn-primary w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 group shadow-xl">
-                Get Started
-                <i class="fa-solid fa-arrow-right group-hover:translate-x-1.5 transition-transform duration-300"></i>
-            </button>
+            <h2 class="unlock-title">Unlock LyCash</h2>
+            <p class="unlock-subtitle">Enter your 4-digit PIN</p>
+
+            <div class="unlock-pin-dots" id="unlock-pin-dots">
+                <div class="unlock-pin-dot" id="unlock-dot-1"></div>
+                <div class="unlock-pin-dot" id="unlock-dot-2"></div>
+                <div class="unlock-pin-dot" id="unlock-dot-3"></div>
+                <div class="unlock-pin-dot" id="unlock-dot-4"></div>
+            </div>
+
+            <div id="unlock-error" class="unlock-error"></div>
+
+            <div class="unlock-numpad">
+                <button class="unlock-numpad-btn" data-digit="1">1</button>
+                <button class="unlock-numpad-btn" data-digit="2">2</button>
+                <button class="unlock-numpad-btn" data-digit="3">3</button>
+                <button class="unlock-numpad-btn" data-digit="4">4</button>
+                <button class="unlock-numpad-btn" data-digit="5">5</button>
+                <button class="unlock-numpad-btn" data-digit="6">6</button>
+                <button class="unlock-numpad-btn" data-digit="7">7</button>
+                <button class="unlock-numpad-btn" data-digit="8">8</button>
+                <button class="unlock-numpad-btn" data-digit="9">9</button>
+                <button class="unlock-numpad-btn" id="unlock-bio-btn">
+                    <i class="fa-solid fa-fingerprint bio-icon"></i>
+                </button>
+                <button class="unlock-numpad-btn" data-digit="0">0</button>
+                <button class="unlock-numpad-btn backspace" id="unlock-backspace">
+                    <i class="fa-solid fa-delete-left"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="view-reg-1" class="view-section items-center p-5 pt-6 md:pt-10">
-        <div class="max-w-md w-full z-10">
-            <div class="flex items-center justify-between mb-5">
-                <button onclick="navTo('view-welcome')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
-                    <i class="fa-solid fa-chevron-left text-lg"></i>
+    <!-- VIEW: Welcome -->
+    <div id="view-welcome" class="view-section fixed-view active">
+        <div class="fixed-content">
+            <div
+                style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 10px 0;">
+                <div
+                    class="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] bg-white/40 backdrop-blur-2xl border border-white/60 flex items-center justify-center shadow-2xl mb-6 animate-[float_6s_ease-in-out_infinite]">
+                    <i
+                        class="fa-solid fa-wallet text-transparent bg-clip-text bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] text-3xl md:text-4xl"></i>
+                </div>
+
+                <h1 class="text-2xl md:text-4xl font-bold mb-2 tracking-tight text-gray-800 dark:text-white">
+                    Welcome to <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF3377] to-[#00B4DB]">LyCash</span>
+                </h1>
+
+                <p
+                    class="text-base md:text-lg text-gray-700 dark:text-gray-200 mb-6 font-serif italic min-h-[30px] drop-shadow-sm">
+                    Your <span id="typewriter-text" class="text-[#FF3377] font-semibold"></span><span
+                        class="typewriter-cursor">|</span> wallet.
+                </p>
+
+                <button onclick="navTo('view-reg-1')"
+                    class="btn-primary w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 group shadow-xl max-w-sm">
+                    Get Started
+                    <i
+                        class="fa-solid fa-arrow-right group-hover:translate-x-1.5 transition-transform duration-300"></i>
                 </button>
-                <span class="text-xs font-bold tracking-widest text-[#FF3377] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 1 of 3</span>
             </div>
-            
-            <div class="mb-5 px-2">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Let's get to know you</h2>
-                <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">Enter your personal details to set up your account securely and professionally.</p>
+        </div>
+    </div>
+
+    <!-- VIEW: Registration Step 1 -->
+    <div id="view-reg-1" class="view-section fixed-view">
+        <div class="fixed-content">
+            <div class="flex items-center justify-between mb-3">
+                <button onclick="navTo('view-welcome')"
+                    class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                    <i class="fa-solid fa-chevron-left text-base"></i>
+                </button>
+                <span
+                    class="text-[10px] font-bold tracking-widest text-[#FF3377] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step
+                    1 of 3</span>
             </div>
-            
-            <form id="form-reg-1" class="space-y-5 bg-white/40 backdrop-blur-xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
+
+            <div class="mb-3 px-1">
+                <h2 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Let's get to know
+                    you</h2>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">Enter your personal details to
+                    set up your account.</p>
+            </div>
+
+            <form id="form-reg-1"
+                class="space-y-3 bg-white/40 backdrop-blur-xl border border-white/50 p-4 md:p-6 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)] flex-1 max-h-[70vh] overflow-y-auto">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Full Name</label>
-                    <input type="text" id="reg-name" required placeholder="Lydiah Doe" class="ly-input">
+                    <label class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Full
+                        Name</label>
+                    <input type="text" id="reg-name" required placeholder="Lydiah Doe" class="ly-input"
+                        style="padding:14px 20px;font-size:0.95rem;">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Email Address</label>
-                    <input type="email" id="reg-email" required placeholder="hello@lycash.com" class="ly-input">
+                    <label class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Email
+                        Address</label>
+                    <input type="email" id="reg-email" required placeholder="hello@lycash.com" class="ly-input"
+                        style="padding:14px 20px;font-size:0.95rem;">
                 </div>
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-1">
-                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Country</label>
-                        <select id="reg-country" class="ly-input appearance-none px-4 bg-white/60" required>
+                        <label
+                            class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Country</label>
+                        <select id="reg-country" class="ly-input appearance-none px-3 bg-white/60" required
+                            style="padding:14px 12px;font-size:0.95rem;">
                             <option value="+254">🇰🇪 +254</option>
                             <option value="+1">🇺🇸 +1</option>
                             <option value="+44">🇬🇧 +44</option>
                         </select>
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Phone</label>
-                        <input type="tel" id="reg-phone" required placeholder="7XX XXX XXX" class="ly-input">
+                        <label
+                            class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Phone</label>
+                        <input type="tel" id="reg-phone" required placeholder="7XX XXX XXX" class="ly-input"
+                            style="padding:14px 20px;font-size:0.95rem;">
                     </div>
                 </div>
-                
-                <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold mt-6 text-lg">
-                    Continue
-                </button>
+                <button type="submit"
+                    class="btn-primary w-full py-3 rounded-xl font-bold text-base mt-2">Continue</button>
             </form>
         </div>
     </div>
 
-    <div id="view-reg-2" class="view-section items-center p-5 pt-6 md:pt-10">
-        <div class="max-w-md w-full z-10">
-            <div class="flex items-center justify-between mb-5">
-                <button onclick="navTo('view-reg-1')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
-                    <i class="fa-solid fa-chevron-left text-lg"></i>
+    <!-- VIEW: Registration Step 2 -->
+    <div id="view-reg-2" class="view-section fixed-view">
+        <div class="fixed-content">
+            <div class="flex items-center justify-between mb-3">
+                <button onclick="navTo('view-reg-1')"
+                    class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                    <i class="fa-solid fa-chevron-left text-base"></i>
                 </button>
-                <span class="text-xs font-bold tracking-widest text-[#00B4DB] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 2 of 3</span>
+                <span
+                    class="text-[10px] font-bold tracking-widest text-[#00B4DB] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step
+                    2 of 3</span>
             </div>
-            
-            <div class="mb-5 px-2">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Receiving Details</h2>
-                <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">How would you like to receive funds? You can skip and set this later in your profile.</p>
+
+            <div class="mb-3 px-1">
+                <h2 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Receiving Details
+                </h2>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">How would you like to receive
+                    funds?</p>
             </div>
-            
-            <form id="form-reg-2" class="space-y-5 bg-white/40 backdrop-blur-xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
-                
-                <!-- Toggle Segmented Control -->
-                <div class="segmented-control mb-6">
+
+            <form id="form-reg-2"
+                class="space-y-3 bg-white/40 backdrop-blur-xl border border-white/50 p-4 md:p-6 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)] flex-1 max-h-[70vh] overflow-y-auto">
+                <div class="segmented-control mb-2">
                     <div id="seg-till" class="segmented-btn active" onclick="setReceiveMode('till')">Till Number</div>
                     <div id="seg-paybill" class="segmented-btn" onclick="setReceiveMode('paybill')">Paybill</div>
                 </div>
 
-                <!-- Till Inputs -->
-                <div id="mode-till-inputs" class="space-y-5">
+                <div id="mode-till-inputs" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Business Till Number</label>
-                        <input type="number" id="reg-till" placeholder="e.g. 123456" class="ly-input">
+                        <label
+                            class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Business
+                            Till Number</label>
+                        <input type="number" id="reg-till" placeholder="e.g. 123456" class="ly-input"
+                            style="padding:14px 20px;font-size:0.95rem;">
                     </div>
                 </div>
 
-                <!-- Paybill Inputs -->
-                <div id="mode-paybill-inputs" class="space-y-5 hidden">
+                <div id="mode-paybill-inputs" class="space-y-3 hidden">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Paybill Number</label>
-                        <input type="number" id="reg-paybill" placeholder="e.g. 523523" class="ly-input">
+                        <label
+                            class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Paybill
+                            Number</label>
+                        <input type="number" id="reg-paybill" placeholder="e.g. 523523" class="ly-input"
+                            style="padding:14px 20px;font-size:0.95rem;">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-2 ml-2 uppercase tracking-wider">Account Number</label>
-                        <input type="text" id="reg-account" placeholder="e.g. Your Name/Business" class="ly-input">
+                        <label
+                            class="block text-[10px] font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Account
+                            Number</label>
+                        <input type="text" id="reg-account" placeholder="e.g. Your Name/Business" class="ly-input"
+                            style="padding:14px 20px;font-size:0.95rem;">
                     </div>
                 </div>
-                
-                <div class="pt-6 flex flex-col gap-3">
-                    <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold text-lg">
-                        Continue to Security
-                    </button>
-                    <button type="button" onclick="document.getElementById('form-reg-2').dispatchEvent(new Event('submit'))" class="w-full py-4 rounded-xl font-semibold text-gray-600 bg-white/30 hover:bg-white/50 border border-white/40 transition shadow-sm">
-                        Skip for now
-                    </button>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-base">Continue to
+                        Security</button>
+                    <button type="button"
+                        onclick="document.getElementById('form-reg-2').dispatchEvent(new Event('submit'))"
+                        class="w-full py-3 rounded-xl font-semibold text-gray-600 bg-white/30 hover:bg-white/50 border border-white/40 transition shadow-sm text-sm">Skip
+                        for now</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="view-reg-3" class="view-section items-center p-5 pt-6 md:pt-10">
-        <div class="max-w-md w-full z-10 flex flex-col">
-            
+    <!-- VIEW: Registration Step 3 -->
+    <div id="view-reg-3" class="view-section fixed-view">
+        <div class="fixed-content">
             <div id="pin-header-nav">
-                <div class="flex items-center justify-between mb-5">
-                    <button onclick="navTo('view-reg-2')" class="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
-                        <i class="fa-solid fa-chevron-left text-lg"></i>
+                <div class="flex items-center justify-between mb-2">
+                    <button onclick="navTo('view-reg-2')"
+                        class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/50 flex items-center justify-center active:scale-90 transition hover:bg-white/60 shadow-sm text-gray-700">
+                        <i class="fa-solid fa-chevron-left text-base"></i>
                     </button>
-                    <span class="text-xs font-bold tracking-widest text-[#9b59b6] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step 3 of 3</span>
+                    <span
+                        class="text-[10px] font-bold tracking-widest text-[#9b59b6] uppercase bg-white/40 px-3 py-1 rounded-full border border-white/50 shadow-sm">Step
+                        3 of 3</span>
                 </div>
-                
-                <div class="mb-5 px-2">
-                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Secure your wallet</h2>
-                    <p class="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">Create a PIN to securely authorize your transactions.</p>
+                <div class="mb-2 px-1">
+                    <h2 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Secure your
+                        wallet</h2>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">Create a PIN to authorize
+                        transactions.</p>
                 </div>
             </div>
 
-            <!-- Standard PIN Flow -->
-            <div id="pin-setup-container" class="w-full text-center transition-opacity duration-300 bg-white/40 backdrop-blur-xl border border-white/50 p-8 rounded-[3rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)]">
-                <h3 id="pin-title" class="text-2xl font-bold mb-8 tracking-tight text-gray-800 dark:text-white">Enter 4-Digit PIN</h3>
-                
-                <!-- PIN Dots -->
-                <div class="flex justify-center gap-6 mb-12" id="pin-dots">
+            <div id="pin-setup-container"
+                class="w-full text-center transition-opacity duration-300 bg-white/40 backdrop-blur-xl border border-white/50 p-5 md:p-6 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.04)] flex-1 flex flex-col justify-center">
+                <h3 id="pin-title"
+                    class="text-lg md:text-xl font-bold mb-4 tracking-tight text-gray-800 dark:text-white">Enter 4-Digit
+                    PIN</h3>
+                <div class="pin-dots-container" id="pin-dots">
                     <div class="pin-dot" id="dot-1"></div>
                     <div class="pin-dot" id="dot-2"></div>
                     <div class="pin-dot" id="dot-3"></div>
                     <div class="pin-dot" id="dot-4"></div>
                 </div>
-
-                <!-- Custom Keyboard -->
-                <div class="grid grid-cols-3 gap-y-4 gap-x-6 sm:gap-y-5 sm:gap-x-8 max-w-[280px] mx-auto">
+                <div class="grid grid-cols-3 gap-y-3 gap-x-4 sm:gap-y-4 sm:gap-x-6 max-w-[240px] mx-auto">
                     <button class="numpad-btn" onclick="pressPin(1)">1</button>
                     <button class="numpad-btn" onclick="pressPin(2)">2</button>
                     <button class="numpad-btn" onclick="pressPin(3)">3</button>
@@ -557,94 +1415,108 @@
                     <button class="numpad-btn" onclick="pressPin(9)">9</button>
                     <button class="numpad-btn empty"></button>
                     <button class="numpad-btn" onclick="pressPin(0)">0</button>
-                    <button class="numpad-btn text-2xl bg-transparent border-none shadow-none text-gray-500 hover:text-gray-800" onclick="backspacePin()"><i class="fa-solid fa-delete-left"></i></button>
+                    <button
+                        class="numpad-btn text-2xl bg-transparent border-none shadow-none text-gray-500 hover:text-gray-800"
+                        onclick="backspacePin()"><i class="fa-solid fa-delete-left"></i></button>
                 </div>
             </div>
 
-            <!-- Biometrics Prompt (Hidden initially) -->
-            <div id="biometrics-container" class="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-[3rem] p-10 shadow-2xl text-center hidden flex-col items-center transition-opacity duration-500 opacity-0 mt-4">
-                <div class="w-24 h-24 rounded-[2rem] bg-gradient-to-tr from-[#9b59b6] to-[#FF3377] flex items-center justify-center text-white text-5xl mb-8 shadow-[0_15px_30px_rgba(155,89,182,0.4)] animate-[float_4s_ease-in-out_infinite]" id="bio-icon">
-                    <!-- Icon injected by JS -->
-                </div>
-                <h3 class="text-3xl font-bold mb-3 tracking-tight text-gray-900 dark:text-white" id="bio-title">Enable Biometrics?</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm mb-10 leading-relaxed">Log in and verify payments faster and securely without typing your PIN every time.</p>
-                
-                <div class="w-full space-y-4">
-                    <button onclick="finishSetup(true)" class="btn-primary w-full py-4 rounded-xl font-bold text-lg">Use Biometrics</button>
-                    <button onclick="finishSetup(false)" class="w-full py-4 rounded-xl font-semibold text-gray-600 bg-white/40 hover:bg-white/60 border border-white/50 transition shadow-sm">Not Now</button>
+            <div id="biometrics-container"
+                class="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-6 shadow-2xl text-center hidden flex-col items-center transition-opacity duration-500 opacity-0 mt-3">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] bg-gradient-to-tr from-[#9b59b6] to-[#FF3377] flex items-center justify-center text-white text-3xl md:text-4xl mb-4 shadow-[0_15px_30px_rgba(155,89,182,0.4)] animate-[float_4s_ease-in-out_infinite]"
+                    id="bio-icon"></div>
+                <h3 class="text-xl md:text-2xl font-bold mb-1 tracking-tight text-gray-900 dark:text-white"
+                    id="bio-title">Enable Biometrics?</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">Log in faster without typing
+                    your PIN every time.</p>
+                <div class="w-full space-y-2">
+                    <button onclick="finishSetup(true)"
+                        class="btn-primary w-full py-3 rounded-xl font-bold text-base">Use Biometrics</button>
+                    <button onclick="finishSetup(false)"
+                        class="w-full py-3 rounded-xl font-semibold text-gray-600 bg-white/40 hover:bg-white/60 border border-white/50 transition shadow-sm text-sm">Not
+                        Now</button>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <div id="view-main" class="view-section items-center">
-        <div class="max-w-[1000px] w-full pb-24 p-6 lg:p-10 mx-auto">
-            <!-- Header -->
-            <header class="flex justify-between items-center mb-8">
+    <!-- VIEW: Main -->
+    <div id="view-main" class="view-section">
+        <div class="w-full max-w-[1000px] mx-auto p-4 md:p-6 lg:p-8 pb-28">
+            <header class="flex justify-between items-center mb-6">
                 <div>
-                    <p class="text-base font-semibold text-gray-500 dark:text-gray-400" id="dashboard-greeting">Good Morning,</p>
+                    <p class="text-sm font-semibold text-gray-500 dark:text-gray-400" id="dashboard-greeting">Good
+                        Morning,</p>
                     <h1 class="text-2xl font-bold" id="dashboard-name">User</h1>
                 </div>
-                <button onclick="navTo('view-profile')" class="w-12 h-12 rounded-full glass flex items-center justify-center apple-shadow active:scale-95 transition">
-                    <img src="https://ui-avatars.com/api/?name=User&background=FF3377&color=fff&rounded=true" id="dashboard-avatar" class="w-10 h-10 rounded-full" alt="Profile">
+                <button onclick="navTo('view-profile')"
+                    class="w-12 h-12 rounded-full glass flex items-center justify-center apple-shadow active:scale-95 transition">
+                    <img src="https://ui-avatars.com/api/?name=User&background=FF3377&color=fff&rounded=true"
+                        id="dashboard-avatar" class="w-10 h-10 rounded-full" alt="Profile">
                 </button>
             </header>
 
-            <div class="grid lg:grid-cols-2 gap-8 items-start">
-                <!-- Left Column: Balance & Actions -->
-                <div class="space-y-8">
-                    <!-- Balance Card -->
-                    <div class="glass-card rounded-[2.5rem] p-8 text-white relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full blur-xl -ml-5 -mb-5"></div>
-                        
+            <div class="grid lg:grid-cols-2 gap-6 items-start">
+                <div class="space-y-6">
+                    <div class="glass-card rounded-[2.5rem] p-6 md:p-8 text-white relative overflow-hidden">
+                        <div
+                            class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full blur-xl -ml-5 -mb-5">
+                        </div>
                         <div class="relative z-10">
-                            <div class="flex justify-between items-start mb-6">
+                            <div class="flex justify-between items-start mb-4">
                                 <p class="text-white/80 font-medium tracking-wide text-sm">TOTAL BALANCE</p>
                                 <div class="flex items-center gap-3">
-                                    <button type="button" onclick="toggleBalanceVisibility()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 transition flex items-center justify-center text-white/80" aria-label="Hide balance">
+                                    <button type="button" onclick="toggleBalanceVisibility()"
+                                        class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 transition flex items-center justify-center text-white/80">
                                         <i id="balance-eye-icon" class="fa-solid fa-eye text-sm"></i>
                                     </button>
                                     <i class="fa-solid fa-dollar-sign text-white/50 text-2xl"></i>
                                 </div>
                             </div>
-                            <h2 class="text-5xl font-bold mb-2 tracking-tight" id="dashboard-balance">KSh 0.00</h2>
-                            <p class="text-white/80 text-sm mb-8" id="dashboard-phone">+254 ••• ••• •••</p>
-                            
+                            <h2 class="text-4xl md:text-5xl font-bold mb-2 tracking-tight" id="dashboard-balance">KSh
+                                0.00</h2>
+                            <p class="text-white/80 text-sm mb-6" id="dashboard-phone">+254 ••• ••• •••</p>
                             <div class="flex space-x-3">
-                                <button onclick="openReceiveModal()" class="flex-1 bg-white/20 hover:bg-white/30 transition backdrop-blur-md py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
+                                <button onclick="openReceiveModal()"
+                                    class="flex-1 bg-white/20 hover:bg-white/30 transition backdrop-blur-md py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-plus"></i> Top Up
                                 </button>
-                                <button class="flex-1 bg-white text-[#FF3377] hover:bg-gray-50 transition py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+                                <button
+                                    class="flex-1 bg-white text-[#FF3377] hover:bg-gray-50 transition py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
                                     <i class="fa-solid fa-paper-plane"></i> Send
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Quick Actions Grid -->
-                    <div class="grid grid-cols-4 gap-4">
+                    <div class="grid grid-cols-4 gap-3 md:gap-4">
                         <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
-                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
+                            <div
+                                class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
                                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
                             </div>
                             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Transfer</span>
                         </button>
                         <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
-                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
+                            <div
+                                class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Pay Bill</span>
                         </button>
                         <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
-                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
+                            <div
+                                class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#FF3377] text-xl apple-shadow group-hover:bg-[#FF3377] group-hover:text-white transition">
                                 <i class="fa-solid fa-mobile-screen"></i>
                             </div>
                             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Airtime</span>
                         </button>
                         <button class="flex flex-col items-center gap-2 group active:scale-95 transition">
-                            <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
+                            <div
+                                class="w-14 h-14 md:w-16 md:h-16 rounded-2xl glass flex items-center justify-center text-[#00B4DB] text-xl apple-shadow group-hover:bg-[#00B4DB] group-hover:text-white transition">
                                 <i class="fa-solid fa-ellipsis"></i>
                             </div>
                             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">More</span>
@@ -652,196 +1524,245 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Transactions -->
-                <div class="glass rounded-[2rem] p-6 apple-shadow h-full min-h-[400px] flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
+                <div class="glass rounded-[2rem] p-5 md:p-6 apple-shadow min-h-[350px] md:min-h-[400px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-lg">Recent Activity</h3>
                         <button class="text-sm font-semibold text-[#FF3377]">See All</button>
                     </div>
-                    
-                    <div id="transactions-list" class="flex-1 flex flex-col gap-4 overflow-y-auto pr-2">
-                        <!-- Transactions injected here -->
-                    </div>
+                    <div id="transactions-list" class="flex-1 flex flex-col gap-3 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="view-profile" class="view-section items-center">
-        <div class="max-w-[800px] w-full pb-24 p-6 lg:p-10 mx-auto">
-            <header class="flex items-center mb-8 gap-4">
-                <button onclick="navTo('view-main')" class="w-10 h-10 rounded-full glass flex items-center justify-center active:scale-90 transition shadow-sm">
+    <!-- VIEW: Profile -->
+    <div id="view-profile" class="view-section">
+        <div class="w-full max-w-[800px] mx-auto p-4 md:p-6 lg:p-8 pb-28">
+            <header class="flex items-center mb-6 gap-3">
+                <button onclick="navTo('view-main')"
+                    class="w-10 h-10 rounded-full glass flex items-center justify-center active:scale-90 transition shadow-sm">
                     <i class="fa-solid fa-chevron-left text-gray-600"></i>
                 </button>
-                <h1 class="text-3xl font-bold">Profile & Settings</h1>
+                <h1 class="text-2xl md:text-3xl font-bold">Profile & Settings</h1>
             </header>
 
-            <div class="max-w-xl mx-auto space-y-6">
-                <!-- Profile Header -->
-                <div class="flex flex-col items-center justify-center mb-8">
-                    <div class="w-24 h-24 rounded-full glass flex items-center justify-center apple-shadow mb-4 p-1">
+            <div class="max-w-xl mx-auto space-y-5">
+                <div class="flex flex-col items-center justify-center mb-6">
+                    <div class="w-24 h-24 rounded-full glass flex items-center justify-center apple-shadow mb-3 p-1">
                         <img src="" id="profile-avatar" class="w-full h-full rounded-full" alt="Profile">
                     </div>
                     <h2 class="text-2xl font-bold" id="profile-name-display">User Name</h2>
                     <p class="text-sm text-gray-500 font-medium" id="profile-phone-display">+254 XXX XXX</p>
                 </div>
 
-                <!-- Form to update settings -->
-                <form id="profile-form" class="space-y-6">
-                    <!-- Receiving Details (Matches State) -->
-                    <div>
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Receiving Information</h3>
-                        <div class="ios-list-group">
-                            <div class="ios-list-item">
-                                <span class="font-medium text-sm">Receive Mode</span>
-                                <select id="prof-mode" class="bg-transparent text-right outline-none text-gray-500 focus:text-[#FF3377] font-medium appearance-none">
-                                    <option value="till">Till Number</option>
-                                    <option value="paybill">Paybill</option>
-                                </select>
-                            </div>
-                            <div class="ios-list-item" id="prof-till-container">
-                                <span class="font-medium text-sm">Till Number</span>
-                                <input type="text" id="prof-till" placeholder="e.g. 123456" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
-                            </div>
-                            <div class="ios-list-item hidden" id="prof-paybill-container">
-                                <span class="font-medium text-sm">Paybill Number</span>
-                                <input type="text" id="prof-paybill" placeholder="e.g. 523523" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
-                            </div>
-                            <div class="ios-list-item hidden" id="prof-account-container">
-                                <span class="font-medium text-sm">Account Number</span>
-                                <input type="text" id="prof-account" placeholder="e.g. Name" class="bg-transparent text-right outline-none w-1/2 text-gray-500 focus:text-[#FF3377]">
-                            </div>
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Receiving Information
+                    </h3>
+                    <div class="ios-list-group">
+                        <div class="ios-list-item" onclick="openProfileUpdateModal()">
+                            <span class="font-medium text-sm">Receive Mode</span>
+                            <span class="text-sm text-gray-500" id="prof-mode-display">Till Number</span>
+                            <i class="fa-solid fa-chevron-right text-gray-400 text-xs ml-2"></i>
+                        </div>
+                        <div class="ios-list-item" id="prof-till-container">
+                            <span class="font-medium text-sm">Till Number</span>
+                            <span class="text-sm text-gray-500" id="prof-till-display">—</span>
+                        </div>
+                        <div class="ios-list-item hidden" id="prof-paybill-container">
+                            <span class="font-medium text-sm">Paybill Number</span>
+                            <span class="text-sm text-gray-500" id="prof-paybill-display">—</span>
+                        </div>
+                        <div class="ios-list-item hidden" id="prof-account-container">
+                            <span class="font-medium text-sm">Account Number</span>
+                            <span class="text-sm text-gray-500" id="prof-account-display">—</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Security -->
-                    <div>
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Security</h3>
-                        <div class="ios-list-group">
-                            <div class="ios-list-item">
-                                <span class="font-medium text-sm">Require PIN</span>
-                                <input type="checkbox" id="prof-pin-toggle" class="ios-toggle">
-                            </div>
-                            <div class="ios-list-item">
-                                <span class="font-medium text-sm" id="prof-bio-text">Biometrics</span>
-                                <input type="checkbox" id="prof-bio-toggle" class="ios-toggle">
-                            </div>
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Security</h3>
+                    <div class="ios-list-group">
+                        <div class="ios-list-item">
+                            <span class="font-medium text-sm">Require PIN</span>
+                            <input type="checkbox" id="prof-pin-toggle" class="ios-toggle">
+                        </div>
+                        <div class="ios-list-item">
+                            <span class="font-medium text-sm" id="prof-bio-text">Biometrics</span>
+                            <input type="checkbox" id="prof-bio-toggle" class="ios-toggle">
                         </div>
                     </div>
+                </div>
 
-                    <!-- Preferences -->
-                    <div>
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Appearance</h3>
-                        <div class="ios-list-group">
-                            <div class="ios-list-item">
-                                <span class="font-medium text-sm">Dark Mode</span>
-                                <input type="checkbox" id="prof-theme-toggle" class="ios-toggle">
-                            </div>
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-4">Appearance</h3>
+                    <div class="ios-list-group">
+                        <div class="ios-list-item">
+                            <span class="font-medium text-sm">Dark Mode</span>
+                            <input type="checkbox" id="prof-theme-toggle" class="ios-toggle">
                         </div>
                     </div>
+                </div>
 
-                    <button type="button" onclick="resetApp()" class="w-full py-4 rounded-xl text-red-500 font-bold bg-white/40 dark:bg-black/40 border border-red-500/20 transform transition active:scale-95 shadow-sm">
-                        Log Out / Reset App
-                    </button>
-                </form>
+                <button type="button" onclick="resetApp()"
+                    class="w-full py-4 rounded-xl text-red-500 font-bold bg-white/40 dark:bg-black/40 border border-red-500/20 transform transition active:scale-95 shadow-sm">
+                    Log Out / Reset App
+                </button>
             </div>
         </div>
     </div>
 
-    <nav id="bottom-nav" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[80%] max-w-xs glass rounded-[2rem] px-8 py-3 flex justify-between items-center apple-shadow z-50 hidden transition-opacity duration-300">
-        <button onclick="navTo('view-main')" class="nav-btn active flex flex-col items-center gap-1 active:scale-90 transition text-[#FF3377]" data-target="view-main">
-            <i class="fa-solid fa-house text-2xl"></i>
+    <!-- BOTTOM NAV -->
+    <div id="bottom-nav" class="hidden">
+        <button onclick="navTo('view-main')" class="nav-btn active" data-target="view-main">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
         </button>
-        
-        <!-- Central QR / Receive Action -->
-        <div class="relative -top-5">
-            <button onclick="openReceiveModal()" class="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] text-white flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(255,51,119,0.4)] hover:scale-105 active:scale-95 transition-transform duration-300">
-                <i class="fa-solid fa-qrcode"></i>
-            </button>
-        </div>
-        
-        <button onclick="navTo('view-profile')" class="nav-btn flex flex-col items-center gap-1 active:scale-90 transition text-gray-400" data-target="view-profile">
-            <i class="fa-solid fa-user text-2xl"></i>
+        <button onclick="openReceiveModal()" class="nav-center-btn">
+            <i class="fa-solid fa-qrcode"></i>
         </button>
-    </nav>
+        <button onclick="navTo('view-profile')" class="nav-btn" data-target="view-profile">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </button>
+    </div>
 
+    <!-- RECEIVE MODAL -->
     <div id="receive-modal" class="modal-overlay">
-        <div class="modal-card w-full max-w-sm rounded-[2rem] p-8 apple-shadow">
-            <div class="flex justify-between items-center mb-6">
+        <div class="modal-card w-full max-w-sm rounded-[2rem] p-6 md:p-8 apple-shadow">
+            <div class="flex justify-between items-center mb-5">
                 <h3 class="text-xl font-bold">Receive Funds</h3>
-                <button onclick="closeReceiveModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                <button onclick="closeReceiveModal()"
+                    class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
 
-            <!-- Input State -->
             <div id="modal-input-state">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">From (M-Pesa)</label>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">From
+                            (M-Pesa)</label>
                         <div class="flex relative">
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">+254</span>
-                            <input type="tel" id="stk-phone" placeholder="7XX XXX XXX" class="ly-input pl-14 font-medium" maxlength="9">
+                            <span
+                                class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">+254</span>
+                            <input type="tel" id="stk-phone" placeholder="7XX XXX XXX"
+                                class="ly-input pl-14 font-medium" maxlength="9">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">Amount</label>
+                        <label
+                            class="block text-xs font-semibold text-gray-500 mb-1 ml-1 uppercase tracking-wide">Amount</label>
                         <div class="flex relative">
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">KSh</span>
-                            <input type="number" id="stk-amount" placeholder="0.00" class="ly-input pl-14 font-bold text-lg">
+                            <span
+                                class="absolute left-4 top-1/2 transform -translate-y-1/2 font-medium text-gray-400">KSh</span>
+                            <input type="number" id="stk-amount" placeholder="0.00"
+                                class="ly-input pl-14 font-bold text-lg">
                         </div>
                     </div>
                 </div>
-                <button onclick="initiateSTKPush()" class="btn-primary w-full mt-8 py-4 rounded-xl font-bold text-lg shadow-lg">
+                <button onclick="initiateSTKPush()"
+                    class="btn-primary w-full mt-6 py-4 rounded-xl font-bold text-lg shadow-lg" id="stk-push-btn">
                     Send Request
                 </button>
             </div>
 
-            <!-- Loading State -->
-            <div id="modal-loading-state" class="hidden py-8 flex flex-col items-center">
-                <div class="cute-loader-wrapper mb-6">
+            <div id="modal-loading-state" class="hidden py-6 flex flex-col items-center">
+                <div class="cute-loader-wrapper mb-4">
                     <div class="cute-loader-core"><i class="fa-solid fa-mobile-screen"></i></div>
                     <div class="cute-loader-ring-1"></div>
                     <div class="cute-loader-ring-2"></div>
                 </div>
                 <h4 class="font-bold text-lg text-center mb-1">Waiting for User...</h4>
-                <p class="text-sm text-gray-500 text-center animate-pulse">An M-Pesa prompt has been sent.</p>
+                <p id="stk-status-text" class="text-sm text-gray-500 text-center animate-pulse">An M-Pesa prompt has
+                    been sent.</p>
             </div>
 
-            <!-- Success State -->
-            <div id="modal-success-state" class="hidden py-8 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-green-500 text-4xl mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+            <div id="modal-success-state" class="hidden py-6 flex flex-col items-center">
+                <div
+                    class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-green-500 text-3xl mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
                     <i class="fa-solid fa-check"></i>
                 </div>
                 <h4 class="font-bold text-xl text-center mb-1 text-green-600">Payment Received!</h4>
                 <p class="text-sm text-gray-500 text-center" id="success-amount-msg">KSh 0.00 added to balance.</p>
-                <button onclick="closeReceiveModal()" class="mt-8 w-full py-4 rounded-xl bg-gray-100 dark:bg-gray-800 font-bold active:scale-95 transition">Done</button>
+                <button onclick="closeReceiveModal()"
+                    class="mt-6 w-full py-4 rounded-xl bg-gray-100 dark:bg-gray-800 font-bold active:scale-95 transition">Done</button>
+            </div>
+
+            <div id="modal-failed-state" class="hidden py-6 flex flex-col items-center">
+                <div
+                    class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-3xl mb-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <h4 class="font-bold text-xl text-center mb-1 text-red-600">Payment Failed</h4>
+                <p class="text-sm text-gray-500 text-center" id="failed-msg">The transaction could not be completed.</p>
+                <button onclick="closeReceiveModal()"
+                    class="mt-6 w-full py-4 rounded-xl bg-gray-100 dark:bg-gray-800 font-bold active:scale-95 transition">OK</button>
             </div>
         </div>
     </div>
 
-    <div id="unlock-modal" class="modal-overlay">
-        <div class="modal-card w-full max-w-sm rounded-[2rem] p-8 apple-shadow text-center">
-            <div class="w-20 h-20 mx-auto rounded-[1.75rem] bg-gradient-to-tr from-[#FF3377] to-[#00B4DB] flex items-center justify-center text-white text-3xl mb-6">
-                <i class="fa-solid fa-lock"></i>
+    <!-- PROFILE UPDATE MODAL -->
+    <div id="profile-update-modal" class="modal-overlay profile-update-modal">
+        <div class="modal-card rounded-[2rem] p-6 md:p-8 apple-shadow">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold">Update Receiving Details</h3>
+                <button onclick="closeProfileUpdateModal()"
+                    class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                    <i class="fa-solid fa-times"></i>
+                </button>
             </div>
-            <h3 class="text-2xl font-bold mb-2">Unlock LyCash</h3>
-            <p class="text-sm text-gray-500 mb-8">Enter your PIN to continue.</p>
-            <input id="unlock-pin" type="password" inputmode="numeric" maxlength="4" class="ly-input text-center tracking-[0.6em] font-bold" placeholder="••••">
-            <p id="unlock-error" class="text-sm text-red-500 mt-3 min-h-[20px]"></p>
-            <button onclick="unlockWithPin()" class="btn-primary w-full mt-5 py-4 rounded-xl font-bold text-lg">Unlock</button>
-            <button id="unlock-bio-btn" onclick="requestNativeBiometrics('unlock')" class="w-full mt-3 py-4 rounded-xl font-semibold text-gray-600 bg-white/40 hover:bg-white/60 border border-white/50 transition shadow-sm">
-                Use Biometrics
-            </button>
+
+            <form id="profile-update-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Receive
+                        Mode</label>
+                    <div class="segmented-control">
+                        <div id="update-seg-till" class="segmented-btn active" onclick="setUpdateMode('till')">Till
+                            Number</div>
+                        <div id="update-seg-paybill" class="segmented-btn" onclick="setUpdateMode('paybill')">Paybill
+                        </div>
+                    </div>
+                </div>
+
+                <div id="update-mode-till">
+                    <label class="block text-xs font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Business
+                        Till Number</label>
+                    <input type="text" id="update-till" placeholder="e.g. 123456" class="ly-input">
+                </div>
+
+                <div id="update-mode-paybill" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Paybill
+                            Number</label>
+                        <input type="text" id="update-paybill" placeholder="e.g. 523523" class="ly-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 ml-2 uppercase tracking-wider">Account
+                            Number</label>
+                        <input type="text" id="update-account" placeholder="e.g. Your Name" class="ly-input">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold text-lg mt-4">
+                    Update Details
+                </button>
+            </form>
         </div>
     </div>
 
     <script>
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+        const STK_POLL_INTERVAL = 2500;
+        const STK_MAX_POLL_ATTEMPTS = 48;
+        const PENDING_RECOVERY_LIMIT = 10;
+
         const defaultState = {
             isSetupComplete: false,
             user: {
                 name: '', email: '', country: '+254', phone: '',
-                receiveMode: 'till', // 'till' or 'paybill'
+                receiveMode: 'till',
                 till: '', paybill: '', account: '',
                 pin: '', requirePin: true, useBiometrics: false, darkTheme: false
             },
@@ -856,58 +1777,83 @@
         let isHandlingBrowserBack = false;
         let isBalanceVisible = localStorage.getItem('lycash_balance_visible') !== 'false';
         let activeStkTrackingId = null;
-        
-        // Registration Temp State
+        let activePollInterval = null;
+        let activePollAttempts = 0;
+        let isProcessingPayment = false;
+        let notifiedTransactions = new Set(JSON.parse(localStorage.getItem('lycash_notified') || '[]'));
+
+        let unlockPin = '';
+        let unlockAttempts = 0;
+        const MAX_UNLOCK_ATTEMPTS = 5;
+        let updateMode = 'till';
+
+        let isOnline = true;
         let currentPin = '';
         let isConfirmingPin = false;
         let tempPin = '';
-        
-        // UI Text Animation
-        const adjectives = ["classy", "beautiful", "secure", "everyday"];
-        let adjIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        
-        function initTypewriter() {
-            const el = document.getElementById("typewriter-text");
-            if(!el) return;
-            const currentWord = adjectives[adjIndex];
-            
-            if (isDeleting) {
-                el.innerText = currentWord.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                el.innerText = currentWord.substring(0, charIndex + 1);
-                charIndex++;
+
+        // ============================================================
+        // NETWORK STATE
+        // ============================================================
+        function getNetworkState() {
+            if (window.LyCashAndroidOnline !== undefined && typeof window.LyCashAndroidOnline === 'boolean') {
+                return window.LyCashAndroidOnline;
             }
-            
-            let speed = isDeleting ? 50 : 120;
-            if (!isDeleting && charIndex === currentWord.length) {
-                speed = 2000; // Pause at end
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                adjIndex = (adjIndex + 1) % adjectives.length;
-                speed = 500; // Pause before typing next
+            if (window.navigator && typeof window.navigator.onLine === 'boolean') {
+                return window.navigator.onLine;
             }
-            setTimeout(initTypewriter, speed);
+            return true;
         }
 
-        // Init App
-        document.addEventListener('DOMContentLoaded', () => {
-            initTypewriter();
-            const savedView = getRestorableView();
-            navTo(savedView, false, true);
-            history.replaceState({ viewId: savedView }, '', window.location.href);
-            history.pushState({ viewId: savedView }, '', window.location.href);
-            renderRegistrationProgress();
-            renderApp();
-            syncUserRoom();
-            requestNativeNotificationPermission();
-            if (appState.isSetupComplete && appState.user.requirePin && sessionStorage.getItem('lycash_unlocked') !== 'true') {
-                setTimeout(showUnlockPrompt, 120);
-            }
+        function setNetworkState(online) {
+            isOnline = online;
+            window.LyCashAndroidOnline = online;
+            updateOfflineBadge();
+            if (online) { onNetworkOnline(); } else { onNetworkOffline(); }
+        }
+
+        window.addEventListener('lycash:network', function (e) {
+            const detail = e.detail || {};
+            if (typeof detail.online === 'boolean') setNetworkState(detail.online);
         });
+
+        window.addEventListener('online', function () {
+            if (window.LyCashAndroidOnline === undefined || window.LyCashAndroidOnline === true) setNetworkState(true);
+        });
+        window.addEventListener('offline', function () {
+            if (window.LyCashAndroidOnline === undefined || window.LyCashAndroidOnline === false) setNetworkState(false);
+        });
+
+        isOnline = getNetworkState();
+        window.LyCashAndroidOnline = isOnline;
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        function updateOfflineBadge() {
+            const badge = document.getElementById('offline-badge');
+            if (!badge) return;
+            badge.classList.toggle('show', !isOnline);
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const icons = {
+                success: 'fa-solid fa-check-circle',
+                error: 'fa-solid fa-exclamation-circle',
+                warning: 'fa-solid fa-triangle-exclamation',
+                info: 'fa-solid fa-circle-info'
+            };
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<i class="${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('toast-out');
+                setTimeout(() => toast.remove(), 350);
+            }, duration);
+        }
 
         function callNative(action, payload = {}) {
             const message = { action, payload };
@@ -923,8 +1869,22 @@
 
         window.LyCashWebView = {
             biometricResult(success) {
-                if (success) unlockApp();
-                else document.getElementById('unlock-error').innerText = 'Biometric verification failed.';
+                if (success) {
+                    if (document.getElementById('unlock-modal').classList.contains('active')) {
+                        sessionStorage.setItem('lycash_unlocked', 'true');
+                        document.getElementById('unlock-error').textContent = '';
+                        hideUnlockPrompt();
+                        unlockPin = '';
+                        updateUnlockDots();
+                        syncUserRoom();
+                        showToast('Biometric verification successful!', 'success', 2000);
+                    }
+                } else {
+                    if (document.getElementById('unlock-modal').classList.contains('active')) {
+                        document.getElementById('unlock-error').textContent = 'Biometric verification failed. Please use PIN.';
+                        showToast('Biometric verification failed.', 'error', 3000);
+                    }
+                }
             },
             notificationResult(result) {
                 console.log('Native notification permission:', result);
@@ -934,11 +1894,430 @@
             }
         };
 
-        // Navigation Engine
-        function getInitialView() {
-            return appState.isSetupComplete ? 'view-main' : 'view-welcome';
+        function requestNativeBiometrics(reason = 'auth') {
+            callNative('biometrics.request', { reason });
+            showToast('Checking biometrics...', 'info', 2000);
         }
 
+        function requestNativeNotificationPermission() {
+            callNative('notifications.requestPermission', {});
+        }
+
+        // ============================================================
+        // UNLOCK FUNCTIONS
+        // ============================================================
+        function showUnlockPrompt() {
+            unlockPin = '';
+            unlockAttempts = 0;
+            document.getElementById('unlock-error').textContent = '';
+            updateUnlockDots();
+            document.getElementById('unlock-modal').classList.add('active');
+            document.getElementById('unlock-card').classList.remove('unlock-shake');
+        }
+
+        function hideUnlockPrompt() {
+            document.getElementById('unlock-modal').classList.remove('active');
+        }
+
+        function updateUnlockDots() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`unlock-dot-${i}`);
+                if (i <= unlockPin.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            }
+        }
+
+        function unlockWithPin() {
+            if (unlockPin.length !== 4) return;
+
+            if (unlockPin === appState.user.pin) {
+                sessionStorage.setItem('lycash_unlocked', 'true');
+                document.getElementById('unlock-error').textContent = '';
+                hideUnlockPrompt();
+                unlockPin = '';
+                updateUnlockDots();
+                document.getElementById('unlock-card').classList.remove('unlock-shake');
+                syncUserRoom();
+                showToast('Welcome back!', 'success', 2000);
+            } else {
+                unlockAttempts++;
+                const card = document.getElementById('unlock-card');
+                card.classList.remove('unlock-shake');
+                void card.offsetWidth;
+                card.classList.add('unlock-shake');
+
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                const remaining = MAX_UNLOCK_ATTEMPTS - unlockAttempts;
+                let errorMsg = 'Incorrect PIN.';
+                if (remaining > 0) errorMsg += ` ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`;
+                else errorMsg = 'Too many failed attempts. Please reset the app.';
+                document.getElementById('unlock-error').textContent = errorMsg;
+
+                setTimeout(() => {
+                    unlockPin = '';
+                    updateUnlockDots();
+                    card.classList.remove('unlock-shake');
+                }, 400);
+
+                if (unlockAttempts >= MAX_UNLOCK_ATTEMPTS) {
+                    setTimeout(() => {
+                        showToast('Too many failed attempts. Logging out.', 'error', 3000);
+                        resetApp();
+                    }, 1000);
+                }
+            }
+        }
+
+        function unlockDigit(digit) {
+            if (unlockPin.length >= 4) return;
+            unlockPin += String(digit);
+            updateUnlockDots();
+            if (unlockPin.length === 4) setTimeout(unlockWithPin, 150);
+        }
+
+        function unlockBackspace() {
+            if (unlockPin.length > 0) {
+                unlockPin = unlockPin.slice(0, -1);
+                updateUnlockDots();
+            }
+        }
+
+        // ============================================================
+        // UNLOCK EVENT LISTENERS
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.unlock-numpad-btn[data-digit]').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    const digit = this.getAttribute('data-digit');
+                    if (digit !== null) unlockDigit(parseInt(digit));
+                });
+                btn.addEventListener('touchstart', function (e) { e.preventDefault(); });
+            });
+
+            document.getElementById('unlock-backspace').addEventListener('click', unlockBackspace);
+            document.getElementById('unlock-bio-btn').addEventListener('click', function () {
+                requestNativeBiometrics('unlock');
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (!document.getElementById('unlock-modal').classList.contains('active')) return;
+                if (e.key >= '0' && e.key <= '9') { e.preventDefault(); unlockDigit(parseInt(e.key)); }
+                else if (e.key === 'Backspace') { e.preventDefault(); unlockBackspace(); }
+                else if (e.key === 'Enter') { e.preventDefault(); unlockWithPin(); }
+            });
+
+            document.getElementById('unlock-modal').addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            }, { passive: false });
+        });
+
+        // ============================================================
+        // TRANSACTION FUNCTIONS
+        // ============================================================
+        function notifyTransaction(transaction) {
+            if (!transaction) return;
+            const key = transaction.trackingId + '_' + transaction.status;
+            if (notifiedTransactions.has(key)) return;
+
+            const amount = parseFloat(transaction.amount || 0).toLocaleString();
+            let title, body, type;
+
+            if (transaction.status === 'SUCCESS') {
+                title = 'Payment Successful';
+                body = `KSh ${amount} payment completed successfully.`;
+                type = 'success';
+                callNative('notification.send', { title, body });
+            } else if (transaction.status === 'FAILED') {
+                title = 'Payment Failed';
+                body = `The KSh ${amount} payment could not be completed.`;
+                type = 'error';
+                callNative('notification.send', { title, body });
+            } else if (transaction.status === 'PENDING') {
+                title = 'Payment Processing';
+                body = `Your KSh ${amount} payment is still being processed.`;
+                type = 'warning';
+                return;
+            } else {
+                return;
+            }
+
+            showToast(body, type, 5000);
+            notifiedTransactions.add(key);
+            localStorage.setItem('lycash_notified', JSON.stringify([...notifiedTransactions]));
+        }
+
+        function updateLocalTransaction(trackingId, patch) {
+            if (!trackingId) return false;
+            const txIndex = appState.transactions.findIndex(t => t.trackingId === trackingId);
+            if (txIndex === -1) return false;
+
+            const tx = appState.transactions[txIndex];
+            let updated = false;
+            for (const [key, value] of Object.entries(patch)) {
+                if (tx[key] !== value) { tx[key] = value; updated = true; }
+            }
+            if (!updated) return false;
+
+            if (patch.status && (patch.status === 'SUCCESS' || patch.status === 'FAILED')) {
+                if (patch.status === 'SUCCESS') {
+                    tx.title = 'M-Pesa Deposit';
+                    tx.type = 'in';
+                    tx.icon = 'fa-solid fa-arrow-down';
+                    tx.color = 'linear-gradient(135deg, #10b981, #34d399)';
+                } else if (patch.status === 'FAILED') {
+                    tx.title = 'M-Pesa Failed';
+                    tx.type = 'failed';
+                    tx.icon = 'fa-solid fa-xmark';
+                    tx.color = 'linear-gradient(135deg, #ef4444, #fb7185)';
+                }
+                if (patch.balance !== undefined) appState.balance = Number(patch.balance);
+                notifyTransaction(tx);
+            }
+
+            saveState();
+            renderApp();
+            return true;
+        }
+
+        // ============================================================
+        // POLLING
+        // ============================================================
+        function pollSTKStatus(trackingId, amount) {
+            if (!trackingId) return;
+            if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
+
+            activePollAttempts = 0;
+            activeStkTrackingId = trackingId;
+            document.getElementById('stk-status-text').innerText = 'Check your phone and enter your M-Pesa PIN.';
+
+            activePollInterval = setInterval(async () => {
+                activePollAttempts += 1;
+                if (!isOnline) {
+                    document.getElementById('stk-status-text').innerText = 'Waiting for internet connection...';
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/status/${trackingId}`);
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Unable to verify payment.');
+
+                    const status = data.status || 'PENDING';
+
+                    if (status === 'SUCCESS') {
+                        clearInterval(activePollInterval); activePollInterval = null;
+                        updateLocalTransaction(trackingId, {
+                            status: 'SUCCESS',
+                            receiptNumber: data.receiptNumber || null,
+                            balance: data.balance || appState.balance
+                        });
+                        if (data.balance !== undefined) { appState.balance = Number(data.balance); saveState(); renderApp(); }
+                        document.getElementById('modal-loading-state').classList.add('hidden');
+                        document.getElementById('modal-success-state').classList.remove('hidden');
+                        document.getElementById('success-amount-msg').innerText = `KSh ${amount.toLocaleString()} added to balance.`;
+                        isProcessingPayment = false;
+                        syncUserRoom();
+                        return;
+                    }
+
+                    if (status === 'FAILED') {
+                        clearInterval(activePollInterval); activePollInterval = null;
+                        updateLocalTransaction(trackingId, { status: 'FAILED', resultDesc: data.resultDesc || 'Transaction failed' });
+                        document.getElementById('modal-loading-state').classList.add('hidden');
+                        document.getElementById('modal-failed-state').classList.remove('hidden');
+                        document.getElementById('failed-msg').innerText = data.resultDesc || 'The transaction failed or was cancelled.';
+                        isProcessingPayment = false;
+                        syncUserRoom();
+                        return;
+                    }
+
+                    if (activePollAttempts >= STK_MAX_POLL_ATTEMPTS) {
+                        clearInterval(activePollInterval); activePollInterval = null;
+                        document.getElementById('stk-status-text').innerText = 'Payment is still being processed. We\'ll update you once confirmed.';
+                        showToast('Payment still processing. You\'ll be notified when confirmed.', 'warning', 6000);
+                        isProcessingPayment = false;
+                        syncUserRoom();
+                        return;
+                    }
+
+                    if (activePollAttempts % 4 === 0) {
+                        document.getElementById('stk-status-text').innerText = 'Waiting for M-Pesa confirmation...';
+                    }
+
+                } catch (error) {
+                    console.warn('[Poll] Error:', error.message);
+                    if (activePollAttempts >= STK_MAX_POLL_ATTEMPTS) {
+                        clearInterval(activePollInterval); activePollInterval = null;
+                        document.getElementById('stk-status-text').innerText = 'Payment is still being processed. We\'ll update you once confirmed.';
+                        isProcessingPayment = false;
+                    }
+                }
+            }, STK_POLL_INTERVAL);
+        }
+
+        function recoverPendingTransactions() {
+            const pendingTxs = appState.transactions.filter(t => t.status === 'PENDING').slice(0, PENDING_RECOVERY_LIMIT);
+            if (!isOnline || pendingTxs.length === 0) return;
+
+            for (const tx of pendingTxs) {
+                if (tx.trackingId) {
+                    fetch(`/api/status/${tx.trackingId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.status) {
+                                if (data.status === 'SUCCESS') {
+                                    updateLocalTransaction(tx.trackingId, {
+                                        status: 'SUCCESS',
+                                        receiptNumber: data.receiptNumber || null,
+                                        balance: data.balance || appState.balance
+                                    });
+                                    if (data.balance !== undefined) { appState.balance = Number(data.balance); saveState(); renderApp(); }
+                                } else if (data.status === 'FAILED') {
+                                    updateLocalTransaction(tx.trackingId, { status: 'FAILED', resultDesc: data.resultDesc || 'Transaction failed' });
+                                } else if (data.status === 'PENDING' && !activePollInterval) {
+                                    pollSTKStatus(tx.trackingId, tx.amount);
+                                }
+                            }
+                        })
+                        .catch(() => { });
+                }
+            }
+        }
+
+        // ============================================================
+        // NETWORK HANDLERS
+        // ============================================================
+        function onNetworkOnline() {
+            console.log('[Network] Online');
+            updateOfflineBadge();
+            recoverPendingTransactions();
+            syncUserRoom();
+            showToast('Back online!', 'success', 2000);
+        }
+
+        function onNetworkOffline() {
+            console.log('[Network] Offline');
+            updateOfflineBadge();
+            showToast('You are offline. Some features are unavailable.', 'warning', 3000);
+        }
+
+        // ============================================================
+        // PIN SETUP
+        // ============================================================
+        function pressPin(num) {
+            if (currentPin.length < 4) {
+                currentPin += num;
+                updatePinUI();
+                if (currentPin.length === 4) setTimeout(handlePinComplete, 200);
+            }
+        }
+
+        function backspacePin() {
+            if (currentPin.length > 0) {
+                currentPin = currentPin.slice(0, -1);
+                updatePinUI();
+            }
+        }
+
+        function updatePinUI() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (i <= currentPin.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            }
+        }
+
+        function handlePinComplete() {
+            if (!isConfirmingPin) {
+                tempPin = currentPin;
+                currentPin = '';
+                isConfirmingPin = true;
+                document.getElementById('pin-title').innerText = "Confirm PIN";
+                updatePinUI();
+            } else {
+                if (currentPin === tempPin) {
+                    appState.user.pin = currentPin;
+                    showBiometricsPrompt();
+                } else {
+                    document.getElementById('pin-dots').classList.add('shake');
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    setTimeout(() => {
+                        document.getElementById('pin-dots').classList.remove('shake');
+                        currentPin = '';
+                        updatePinUI();
+                    }, 400);
+                }
+            }
+        }
+
+        // ============================================================
+        // BIOMETRICS SETUP
+        // ============================================================
+        function checkDeviceBiometrics() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const titleEl = document.getElementById('bio-title');
+            const iconEl = document.getElementById('bio-icon');
+            const profBioText = document.getElementById('prof-bio-text');
+
+            if (isMobile) {
+                titleEl.innerText = "Face / Fingerprint ID?";
+                iconEl.innerHTML = '<i class="fa-solid fa-fingerprint"></i>';
+                if (profBioText) profBioText.innerText = "Face / Touch ID";
+            } else {
+                titleEl.innerText = "Enable Face ID?";
+                iconEl.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
+                if (profBioText) profBioText.innerText = "Face ID";
+            }
+        }
+
+        function showBiometricsPrompt() {
+            document.getElementById('pin-header-nav').classList.add('hidden');
+            document.getElementById('pin-setup-container').classList.add('hidden');
+            const bio = document.getElementById('biometrics-container');
+            bio.classList.remove('hidden');
+            setTimeout(() => bio.classList.remove('opacity-0'), 50);
+            requestNativeBiometrics('enable');
+        }
+
+        function finishSetup(useBio) {
+            appState.user.useBiometrics = useBio;
+            appState.isSetupComplete = true;
+            saveState();
+            syncUserRoom();
+            sessionStorage.setItem('lycash_unlocked', 'true');
+            if (useBio) {
+                requestNativeBiometrics('enable');
+                showToast('Biometrics enabled!', 'success', 2000);
+            }
+            renderApp();
+            navTo('view-main');
+        }
+
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+        const adjectives = ["classy", "beautiful", "secure", "everyday"];
+        let adjIndex = 0, charIndex = 0, isDeleting = false;
+
+        function initTypewriter() {
+            const el = document.getElementById("typewriter-text");
+            if (!el) return;
+            const currentWord = adjectives[adjIndex];
+            if (isDeleting) {
+                el.innerText = currentWord.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                el.innerText = currentWord.substring(0, charIndex + 1);
+                charIndex++;
+            }
+            let speed = isDeleting ? 50 : 120;
+            if (!isDeleting && charIndex === currentWord.length) { speed = 2000; isDeleting = true; }
+            else if (isDeleting && charIndex === 0) { isDeleting = false; adjIndex = (adjIndex + 1) % adjectives.length; speed = 500; }
+            setTimeout(initTypewriter, speed);
+        }
+
+        function getInitialView() { return appState.isSetupComplete ? 'view-main' : 'view-welcome'; }
         function getRestorableView() {
             const view = document.getElementById(currentViewId) ? currentViewId : getInitialView();
             if (appState.isSetupComplete) return view;
@@ -948,43 +2327,34 @@
         function navTo(viewId, animate = true, skipHistory = false) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(viewId);
-            if(target) target.classList.add('active');
+            if (target) target.classList.add('active');
             currentViewId = target ? viewId : getInitialView();
             localStorage.setItem('lycash_current_view', currentViewId);
-            
+
             const authBg = document.getElementById('auth-bg');
             const nav = document.getElementById('bottom-nav');
             const isScrollableView = currentViewId === 'view-main' || currentViewId === 'view-profile';
-            
+            const isAuthView = ['view-welcome', 'view-reg-1', 'view-reg-2', 'view-reg-3'].includes(currentViewId);
+
             document.body.classList.toggle('locked-view', !isScrollableView);
-            
+
             if (isScrollableView) {
                 authBg.classList.remove('active');
                 nav.classList.remove('hidden');
-                setTimeout(() => nav.classList.remove('opacity-0'), 50);
             } else {
-                authBg.classList.add('active');
-                nav.classList.add('hidden', 'opacity-0');
+                if (isAuthView) authBg.classList.add('active');
+                nav.classList.add('hidden');
             }
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                if (btn.dataset.target === currentViewId) {
-                    btn.classList.add('active', 'text-[#FF3377]');
-                    btn.classList.remove('text-gray-400');
-                } else {
-                    btn.classList.remove('active', 'text-[#FF3377]');
-                    btn.classList.add('text-gray-400');
-                }
+                btn.classList.toggle('active', btn.dataset.target === currentViewId);
             });
 
             if (!skipHistory && !isHandlingBrowserBack) {
                 history.pushState({ viewId: currentViewId }, '', window.location.href);
             }
-            
-            // Check Biometrics strings if navigating to reg 3
-            if(currentViewId === 'view-reg-3') {
-                checkDeviceBiometrics();
-            }
+
+            if (currentViewId === 'view-reg-3') checkDeviceBiometrics();
         }
 
         window.addEventListener('popstate', (event) => {
@@ -995,22 +2365,20 @@
             isHandlingBrowserBack = false;
         });
 
-        // Receive Mode Toggle (Registration)
+        // ============================================================
+        // RECEIVE MODE TOGGLE
+        // ============================================================
         function setReceiveMode(mode) {
             appState.user.receiveMode = mode;
             document.getElementById('seg-till').classList.toggle('active', mode === 'till');
             document.getElementById('seg-paybill').classList.toggle('active', mode === 'paybill');
-            
-            if (mode === 'till') {
-                document.getElementById('mode-till-inputs').classList.remove('hidden');
-                document.getElementById('mode-paybill-inputs').classList.add('hidden');
-            } else {
-                document.getElementById('mode-till-inputs').classList.add('hidden');
-                document.getElementById('mode-paybill-inputs').classList.remove('hidden');
-            }
+            document.getElementById('mode-till-inputs').classList.toggle('hidden', mode !== 'till');
+            document.getElementById('mode-paybill-inputs').classList.toggle('hidden', mode !== 'paybill');
         }
 
-        // Form Handlers
+        // ============================================================
+        // FORM HANDLERS
+        // ============================================================
         document.getElementById('form-reg-1').addEventListener('submit', (e) => {
             e.preventDefault();
             appState.user.name = document.getElementById('reg-name').value;
@@ -1023,156 +2391,23 @@
 
         document.getElementById('form-reg-2').addEventListener('submit', (e) => {
             e.preventDefault();
-            if(appState.user.receiveMode === 'till') {
+            if (appState.user.receiveMode === 'till') {
                 appState.user.till = document.getElementById('reg-till').value;
             } else {
                 appState.user.paybill = document.getElementById('reg-paybill').value;
                 appState.user.account = document.getElementById('reg-account').value;
             }
             saveState();
-            // Reset PIN state
             currentPin = ''; isConfirmingPin = false; tempPin = '';
             updatePinUI();
             navTo('view-reg-3');
         });
 
-        // PIN logic
-        function pressPin(num) {
-            if(currentPin.length < 4) {
-                currentPin += num;
-                updatePinUI();
-                if(currentPin.length === 4) setTimeout(handlePinComplete, 200);
-            }
-        }
-        function backspacePin() {
-            if(currentPin.length > 0) {
-                currentPin = currentPin.slice(0, -1);
-                updatePinUI();
-            }
-        }
-        function updatePinUI() {
-            for(let i=1; i<=4; i++) {
-                const dot = document.getElementById(`dot-${i}`);
-                if(i <= currentPin.length) dot.classList.add('filled');
-                else dot.classList.remove('filled');
-            }
-        }
-        function handlePinComplete() {
-            if(!isConfirmingPin) {
-                tempPin = currentPin;
-                currentPin = '';
-                isConfirmingPin = true;
-                document.getElementById('pin-title').innerText = "Confirm PIN";
-                updatePinUI();
-            } else {
-                if(currentPin === tempPin) {
-                    appState.user.pin = currentPin;
-                    showBiometricsPrompt();
-                } else {
-                    document.getElementById('pin-dots').classList.add('shake');
-                    setTimeout(() => {
-                        document.getElementById('pin-dots').classList.remove('shake');
-                        currentPin = '';
-                        updatePinUI();
-                    }, 400);
-                }
-            }
-        }
-
-        // Biometrics detection & display
-        function checkDeviceBiometrics() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const titleEl = document.getElementById('bio-title');
-            const iconEl = document.getElementById('bio-icon');
-            const profBioText = document.getElementById('prof-bio-text');
-            
-            if(isMobile) {
-                titleEl.innerText = "Face / Fingerprint ID?";
-                iconEl.innerHTML = '<i class="fa-solid fa-fingerprint"></i>';
-                if(profBioText) profBioText.innerText = "Face / Touch ID";
-            } else {
-                titleEl.innerText = "Enable Face ID?";
-                iconEl.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
-                if(profBioText) profBioText.innerText = "Face ID";
-            }
-        }
-
-        function requestNativeBiometrics(reason = 'auth') {
-            callNative('biometrics.request', { reason });
-        }
-
-        function requestNativeNotificationPermission() {
-            callNative('notifications.requestPermission', {});
-        }
-
-        function showUnlockPrompt() {
-            document.getElementById('unlock-modal').classList.add('active');
-            const input = document.getElementById('unlock-pin');
-            input.value = '';
-            document.getElementById('unlock-error').innerText = '';
-            setTimeout(() => input.focus(), 150);
-        }
-
-        function unlockApp() {
-            sessionStorage.setItem('lycash_unlocked', 'true');
-            document.getElementById('unlock-modal').classList.remove('active');
-        }
-
-        function unlockWithPin() {
-            const enteredPin = document.getElementById('unlock-pin').value;
-            if (enteredPin === appState.user.pin) {
-                unlockApp();
-            } else {
-                document.getElementById('unlock-error').innerText = 'Incorrect PIN.';
-            }
-        }
-
-        function showBiometricsPrompt() {
-            document.getElementById('pin-header-nav').classList.add('hidden');
-            document.getElementById('pin-setup-container').classList.add('hidden');
-            const bio = document.getElementById('biometrics-container');
-            bio.classList.remove('hidden');
-            setTimeout(() => bio.classList.remove('opacity-0'), 50);
-        }
-
-        function finishSetup(useBio) {
-            appState.user.useBiometrics = useBio;
-            appState.isSetupComplete = true;
-            saveState();
-            syncUserRoom();
-            sessionStorage.setItem('lycash_unlocked', 'true');
-            if (useBio) requestNativeBiometrics('enable');
-            renderApp();
-            navTo('view-main');
-        }
-
-        function toggleBalanceVisibility() {
-            isBalanceVisible = !isBalanceVisible;
-            localStorage.setItem('lycash_balance_visible', String(isBalanceVisible));
-            renderBalance();
-        }
-
-        function renderBalance() {
-            const balanceEl = document.getElementById('dashboard-balance');
-            const eyeIcon = document.getElementById('balance-eye-icon');
-            if (!balanceEl || !eyeIcon) return;
-
-            const formatMoney = (amt) => 'KSh ' + parseFloat(amt).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            balanceEl.innerText = isBalanceVisible ? formatMoney(appState.balance) : '****';
-            eyeIcon.className = isBalanceVisible ? 'fa-solid fa-eye text-sm' : 'fa-solid fa-eye-slash text-sm';
-            eyeIcon.closest('button')?.setAttribute('aria-label', isBalanceVisible ? 'Hide balance' : 'Show balance');
-        }
-
-        function getGreeting() {
-            const hour = new Date().getHours();
-            if (hour < 12) return 'Good Morning,';
-            if (hour < 17) return 'Good Afternoon,';
-            if (hour < 21) return 'Good Evening,';
-            return 'Good Night,';
-        }
-
+        // ============================================================
+        // SYNC & RENDER
+        // ============================================================
         async function syncUserRoom() {
-            if (!appState.user.phone) return;
+            if (!appState.user.phone || !isOnline) return;
             try {
                 const res = await fetch('/api/users/sync', {
                     method: 'POST',
@@ -1182,21 +2417,41 @@
                 const data = await res.json();
                 if (!data.success) return;
                 appState.balance = Number(data.user.balance || 0);
-                appState.transactions = (data.transactions || []).map(mapServerTransaction);
-                saveState();
-                renderApp();
-            } catch (error) {
-                console.warn('User room sync failed:', error);
-            }
+                const serverTxs = (data.transactions || []).map(mapServerTransaction);
+                const localTxMap = {};
+                for (const tx of appState.transactions) if (tx.trackingId) localTxMap[tx.trackingId] = tx;
+                let updated = false;
+                for (const stx of serverTxs) {
+                    if (stx.trackingId) {
+                        const local = localTxMap[stx.trackingId];
+                        if (local) {
+                            if (local.status !== stx.status) {
+                                local.status = stx.status;
+                                local.title = stx.title;
+                                local.type = stx.type;
+                                local.icon = stx.icon;
+                                local.color = stx.color;
+                                local.receiptNumber = stx.receiptNumber;
+                                updated = true;
+                                if (stx.status === 'SUCCESS' || stx.status === 'FAILED') notifyTransaction(local);
+                            }
+                        } else {
+                            appState.transactions.push(stx);
+                            updated = true;
+                        }
+                    }
+                }
+                if (updated) { saveState(); renderApp(); }
+            } catch (error) { console.warn('Sync failed:', error); }
         }
 
         function mapServerTransaction(tx) {
             return {
-                id: tx.trackingId || tx.id,
+                trackingId: tx.trackingId || tx.id,
                 title: tx.status === 'SUCCESS' ? 'M-Pesa Deposit' : tx.status === 'FAILED' ? 'M-Pesa Failed' : 'M-Pesa Pending',
                 amount: tx.amount,
                 date: tx.createdAt || new Date().toISOString(),
-                type: tx.status === 'SUCCESS' ? 'in' : 'pending',
+                type: tx.status === 'SUCCESS' ? 'in' : tx.status === 'FAILED' ? 'failed' : 'pending',
                 status: tx.status,
                 receiptNumber: tx.receiptNumber,
                 icon: tx.status === 'SUCCESS' ? 'fa-solid fa-arrow-down' : tx.status === 'FAILED' ? 'fa-solid fa-xmark' : 'fa-solid fa-clock',
@@ -1216,90 +2471,64 @@
             setReceiveMode(u.receiveMode || 'till');
         }
 
-        // Dashboard Rendering
         function renderApp() {
             if (!appState.isSetupComplete) return;
 
             const u = appState.user;
-            const formatMoney = (amt) => 'KSh ' + parseFloat(amt).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=FF3377&color=fff&rounded=true`;
 
-            // Dashboard
-            document.getElementById('dashboard-greeting').innerText = getGreeting();
+            document.getElementById('dashboard-greeting').innerText = (() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Good Morning,';
+                if (hour < 17) return 'Good Afternoon,';
+                if (hour < 21) return 'Good Evening,';
+                return 'Good Night,';
+            })();
             document.getElementById('dashboard-name').innerText = u.name ? u.name.split(' ')[0] : 'User';
             document.getElementById('dashboard-avatar').src = avatarUrl;
             renderBalance();
             document.getElementById('dashboard-phone').innerText = u.phone || '';
 
-            // Profile
             document.getElementById('profile-name-display').innerText = u.name || 'User Name';
             document.getElementById('profile-phone-display').innerText = u.phone || '';
             document.getElementById('profile-avatar').src = avatarUrl;
-            
-            // Profile Form Binding
-            document.getElementById('prof-mode').value = u.receiveMode || 'till';
-            toggleProfileMode(u.receiveMode || 'till');
-            
-            document.getElementById('prof-till').value = u.till || '';
-            document.getElementById('prof-paybill').value = u.paybill || '';
-            document.getElementById('prof-account').value = u.account || '';
-            
+
+            const modeDisplay = u.receiveMode === 'till' ? 'Till Number' : 'Paybill';
+            document.getElementById('prof-mode-display').innerText = modeDisplay;
+            document.getElementById('prof-till-display').innerText = u.till || '—';
+            document.getElementById('prof-paybill-display').innerText = u.paybill || '—';
+            document.getElementById('prof-account-display').innerText = u.account || '—';
+
+            document.getElementById('prof-till-container').classList.toggle('hidden', u.receiveMode !== 'till');
+            document.getElementById('prof-paybill-container').classList.toggle('hidden', u.receiveMode !== 'paybill');
+            document.getElementById('prof-account-container').classList.toggle('hidden', u.receiveMode !== 'paybill');
+
             document.getElementById('prof-pin-toggle').checked = u.requirePin;
             document.getElementById('prof-bio-toggle').checked = u.useBiometrics;
             document.getElementById('prof-theme-toggle').checked = u.darkTheme;
 
-            // Apply Theme
             if (u.darkTheme) document.body.classList.add('dark-theme');
             else document.body.classList.remove('dark-theme');
 
             renderTransactions();
+            updateOfflineBadge();
         }
 
-        // Profile Interactions
-        function toggleProfileMode(mode) {
-            appState.user.receiveMode = mode;
-            if(mode === 'till') {
-                document.getElementById('prof-till-container').classList.remove('hidden');
-                document.getElementById('prof-paybill-container').classList.add('hidden');
-                document.getElementById('prof-account-container').classList.add('hidden');
-            } else {
-                document.getElementById('prof-till-container').classList.add('hidden');
-                document.getElementById('prof-paybill-container').classList.remove('hidden');
-                document.getElementById('prof-account-container').classList.remove('hidden');
-            }
-            saveState();
+        function renderBalance() {
+            const balanceEl = document.getElementById('dashboard-balance');
+            const eyeIcon = document.getElementById('balance-eye-icon');
+            if (!balanceEl || !eyeIcon) return;
+            const formatMoney = (amt) => 'KSh ' + parseFloat(amt).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            balanceEl.innerText = isBalanceVisible ? formatMoney(appState.balance) : '****';
+            eyeIcon.className = isBalanceVisible ? 'fa-solid fa-eye text-sm' : 'fa-solid fa-eye-slash text-sm';
         }
 
-        document.getElementById('prof-mode').addEventListener('change', (e) => { toggleProfileMode(e.target.value); syncUserRoom(); });
-        document.getElementById('prof-till').addEventListener('change', (e) => { appState.user.till = e.target.value; saveState(); syncUserRoom(); });
-        document.getElementById('prof-paybill').addEventListener('change', (e) => { appState.user.paybill = e.target.value; saveState(); syncUserRoom(); });
-        document.getElementById('prof-account').addEventListener('change', (e) => { appState.user.account = e.target.value; saveState(); syncUserRoom(); });
-        
-        document.getElementById('prof-pin-toggle').addEventListener('change', (e) => {
-            appState.user.requirePin = e.target.checked;
-            if (e.target.checked) sessionStorage.removeItem('lycash_unlocked');
-            saveState();
-            syncUserRoom();
-        });
-        document.getElementById('prof-bio-toggle').addEventListener('change', (e) => {
-            appState.user.useBiometrics = e.target.checked;
-            saveState();
-            syncUserRoom();
-            if (e.target.checked) requestNativeBiometrics('enable');
-        });
-        document.getElementById('prof-theme-toggle').addEventListener('change', (e) => { appState.user.darkTheme = e.target.checked; renderApp(); saveState(); syncUserRoom(); });
-
-        function saveState() { localStorage.setItem('lycash_state', JSON.stringify(appState)); }
-
-        function resetApp() {
-            if(confirm("Are you sure you want to log out and reset the app?")) {
-                localStorage.removeItem('lycash_state');
-                localStorage.removeItem('lycash_current_view');
-                location.reload();
-            }
+        function toggleBalanceVisibility() {
+            isBalanceVisible = !isBalanceVisible;
+            localStorage.setItem('lycash_balance_visible', String(isBalanceVisible));
+            renderBalance();
         }
 
-        // Transactions
         function renderTransactions() {
             const list = document.getElementById('transactions-list');
             list.innerHTML = '';
@@ -1318,7 +2547,7 @@
                 const isPending = tx.status === 'PENDING' || tx.type === 'pending';
                 const sign = isPos ? '+' : '';
                 const colorClass = isPos ? 'text-green-500' : isPending ? 'text-amber-500' : 'text-red-500';
-                const time = new Date(tx.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const time = new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 list.innerHTML += `
                     <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-white/40 dark:hover:bg-white/5 transition cursor-pointer">
                         <div class="flex items-center gap-4">
@@ -1338,10 +2567,132 @@
             });
         }
 
-        // Modal Logic
+        // ============================================================
+        // PROFILE UPDATE MODAL
+        // ============================================================
+        function openProfileUpdateModal() {
+            const u = appState.user;
+            document.getElementById('update-till').value = u.till || '';
+            document.getElementById('update-paybill').value = u.paybill || '';
+            document.getElementById('update-account').value = u.account || '';
+            setUpdateMode(u.receiveMode || 'till');
+            document.getElementById('profile-update-modal').classList.add('active');
+        }
+
+        function closeProfileUpdateModal() {
+            document.getElementById('profile-update-modal').classList.remove('active');
+        }
+
+        function setUpdateMode(mode) {
+            updateMode = mode;
+            document.getElementById('update-seg-till').classList.toggle('active', mode === 'till');
+            document.getElementById('update-seg-paybill').classList.toggle('active', mode === 'paybill');
+            document.getElementById('update-mode-till').classList.toggle('hidden', mode !== 'till');
+            document.getElementById('update-mode-paybill').classList.toggle('hidden', mode !== 'paybill');
+        }
+
+        document.getElementById('profile-update-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const mode = updateMode;
+            const till = document.getElementById('update-till').value.trim();
+            const paybill = document.getElementById('update-paybill').value.trim();
+            const account = document.getElementById('update-account').value.trim();
+
+            if (mode === 'till' && !till) {
+                showToast('Please enter a Till number.', 'warning', 3000);
+                return;
+            }
+            if (mode === 'paybill') {
+                if (!paybill) { showToast('Please enter a Paybill number.', 'warning', 3000); return; }
+                if (!account) { showToast('Please enter an Account number.', 'warning', 3000); return; }
+            }
+
+            appState.user.receiveMode = mode;
+            appState.user.till = till;
+            appState.user.paybill = paybill;
+            appState.user.account = account;
+            saveState();
+            renderApp();
+
+            try {
+                const res = await fetch('/api/users/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: appState.user.phone,
+                        receiveMode: mode,
+                        till: till,
+                        paybill: paybill,
+                        account: account
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Receiving details updated! Channel ID reset for new shortcode.', 'success', 4000);
+                    closeProfileUpdateModal();
+                    await syncUserRoom();
+                } else {
+                    showToast(data.message || 'Failed to update.', 'error', 3000);
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error', 3000);
+            }
+        });
+
+        document.getElementById('profile-update-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeProfileUpdateModal();
+        });
+
+        // ============================================================
+        // PROFILE SETTINGS
+        // ============================================================
+        document.getElementById('prof-pin-toggle').addEventListener('change', (e) => {
+            appState.user.requirePin = e.target.checked;
+            if (e.target.checked) sessionStorage.removeItem('lycash_unlocked');
+            saveState();
+            syncUserRoom();
+        });
+
+        document.getElementById('prof-bio-toggle').addEventListener('change', (e) => {
+            appState.user.useBiometrics = e.target.checked;
+            saveState();
+            syncUserRoom();
+            if (e.target.checked) requestNativeBiometrics('enable');
+        });
+
+        document.getElementById('prof-theme-toggle').addEventListener('change', (e) => {
+            appState.user.darkTheme = e.target.checked;
+            renderApp();
+            saveState();
+            syncUserRoom();
+        });
+
+        function saveState() { localStorage.setItem('lycash_state', JSON.stringify(appState)); }
+
+        function resetApp() {
+            if (confirm("Are you sure you want to log out and reset the app?")) {
+                localStorage.removeItem('lycash_state');
+                localStorage.removeItem('lycash_current_view');
+                localStorage.removeItem('lycash_notified');
+                location.reload();
+            }
+        }
+
+        // ============================================================
+        // MODAL LOGIC
+        // ============================================================
         function openReceiveModal() {
+            if (!isOnline) {
+                showToast('Internet connection required for this transaction.', 'error', 4000);
+                return;
+            }
             document.getElementById('receive-modal').classList.add('active');
-            if(!document.getElementById('stk-phone').value && appState.user.phone) {
+            document.getElementById('modal-input-state').classList.remove('hidden');
+            document.getElementById('modal-loading-state').classList.add('hidden');
+            document.getElementById('modal-success-state').classList.add('hidden');
+            document.getElementById('modal-failed-state').classList.add('hidden');
+            if (!document.getElementById('stk-phone').value && appState.user.phone) {
                 const p = appState.user.phone;
                 const normalized = p.replace(/\D/g, '');
                 document.getElementById('stk-phone').value = normalized.startsWith('254') ? normalized.substring(3) : normalized.replace(/^0/, '');
@@ -1350,24 +2701,41 @@
 
         function closeReceiveModal() {
             document.getElementById('receive-modal').classList.remove('active');
+            if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
+            activeStkTrackingId = null;
+            isProcessingPayment = false;
             setTimeout(() => {
                 document.getElementById('modal-input-state').classList.remove('hidden');
                 document.getElementById('modal-loading-state').classList.add('hidden');
                 document.getElementById('modal-success-state').classList.add('hidden');
+                document.getElementById('modal-failed-state').classList.add('hidden');
                 document.getElementById('stk-amount').value = '';
-                activeStkTrackingId = null;
             }, 300);
         }
 
+        // ============================================================
+        // STK PUSH
+        // ============================================================
         async function initiateSTKPush() {
+            if (isProcessingPayment) return;
+            if (!isOnline) {
+                showToast('Internet connection required for this transaction.', 'error', 4000);
+                return;
+            }
+
             const amount = parseFloat(document.getElementById('stk-amount').value);
             const phoneInput = document.getElementById('stk-phone').value.trim();
-            if (!amount || amount <= 0) return;
-            if (!phoneInput) return;
+            if (!amount || amount <= 0) { showToast('Please enter a valid amount.', 'warning', 3000); return; }
+            if (!phoneInput || phoneInput.length < 9) { showToast('Please enter a valid phone number.', 'warning', 3000); return; }
+
+            isProcessingPayment = true;
+            document.getElementById('stk-push-btn').disabled = true;
 
             document.getElementById('modal-input-state').classList.add('hidden');
             document.getElementById('modal-loading-state').classList.remove('hidden');
-            document.querySelector('#modal-loading-state p').innerText = 'Sending M-Pesa prompt...';
+            document.getElementById('modal-success-state').classList.add('hidden');
+            document.getElementById('modal-failed-state').classList.add('hidden');
+            document.getElementById('stk-status-text').innerText = 'Sending M-Pesa prompt...';
 
             try {
                 const res = await fetch('/api/stk-push', {
@@ -1384,69 +2752,63 @@
                 const data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.message || 'Failed to start STK push.');
 
-                activeStkTrackingId = data.trackingId;
-                appState.transactions.unshift(mapServerTransaction({
-                    trackingId: data.trackingId,
-                    amount: data.amount,
+                const trackingId = data.trackingId;
+                activeStkTrackingId = trackingId;
+
+                const newTx = {
+                    trackingId: trackingId,
+                    amount: amount,
                     status: 'PENDING',
-                    createdAt: new Date().toISOString()
-                }));
+                    title: 'M-Pesa Pending',
+                    type: 'pending',
+                    icon: 'fa-solid fa-clock',
+                    color: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                    date: new Date().toISOString(),
+                    receiptNumber: null
+                };
+                appState.transactions.unshift(newTx);
                 saveState();
                 renderApp();
-                pollSTKStatus(data.trackingId, amount);
+
+                pollSTKStatus(trackingId, amount);
+
             } catch (error) {
-                showSTKError(error.message || 'Could not send M-Pesa prompt.');
+                console.error('[STK]', error);
+                document.getElementById('modal-loading-state').classList.add('hidden');
+                document.getElementById('modal-failed-state').classList.remove('hidden');
+                document.getElementById('failed-msg').innerText = error.message || 'Could not send M-Pesa prompt.';
+                isProcessingPayment = false;
+                document.getElementById('stk-push-btn').disabled = false;
+                showToast(error.message || 'Could not send M-Pesa prompt.', 'error', 4000);
             }
         }
 
-        function pollSTKStatus(trackingId, amount) {
-            let attempts = 0;
-            document.querySelector('#modal-loading-state p').innerText = 'Check your phone and enter your M-Pesa PIN.';
-            const poll = setInterval(async () => {
-                attempts += 1;
-                try {
-                    const res = await fetch(`/api/status/${trackingId}`);
-                    const data = await res.json();
-                    if (!res.ok || !data.success) throw new Error(data.message || 'Unable to verify payment.');
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initTypewriter();
+            updateOfflineBadge();
 
-                    if (data.status === 'SUCCESS') {
-                        clearInterval(poll);
-                        appState.balance = Number(data.balance || appState.balance);
-                        await syncUserRoom();
-                        document.getElementById('modal-loading-state').classList.add('hidden');
-                        document.getElementById('modal-success-state').classList.remove('hidden');
-                        document.getElementById('success-amount-msg').innerText = `KSh ${amount.toLocaleString()} added to balance.`;
-                        window.LyCashWebView.transactionNotification({
-                            title: 'Payment received',
-                            body: `KSh ${amount.toLocaleString()} added to your LyCash wallet.`
-                        });
-                        return;
-                    }
+            const savedView = getRestorableView();
+            navTo(savedView, false, true);
+            history.replaceState({ viewId: savedView }, '', window.location.href);
+            history.pushState({ viewId: savedView }, '', window.location.href);
 
-                    if (data.status === 'FAILED') {
-                        clearInterval(poll);
-                        await syncUserRoom();
-                        showSTKError(data.resultDesc || 'The transaction failed or was cancelled.');
-                        return;
-                    }
+            renderRegistrationProgress();
+            renderApp();
+            requestNativeNotificationPermission();
 
-                    if (attempts >= 24) {
-                        clearInterval(poll);
-                        await syncUserRoom();
-                        showSTKError('Payment is still pending. Your balance will update after confirmation.');
-                    }
-                } catch (error) {
-                    clearInterval(poll);
-                    showSTKError(error.message || 'Could not verify payment.');
-                }
-            }, 2500);
-        }
+            if (appState.isSetupComplete) {
+                setTimeout(() => recoverPendingTransactions(), 1000);
+                setTimeout(() => syncUserRoom(), 500);
+            }
 
-        function showSTKError(message) {
-            document.getElementById('modal-loading-state').classList.add('hidden');
-            document.getElementById('modal-input-state').classList.remove('hidden');
-            alert(message);
-        }
+            if (appState.isSetupComplete && appState.user.requirePin && sessionStorage.getItem('lycash_unlocked') !== 'true') {
+                setTimeout(showUnlockPrompt, 300);
+            }
+        });
     </script>
 </body>
+
 </html>

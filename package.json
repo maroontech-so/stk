@@ -1,24 +1,18 @@
 {
-  "name": "palpluss-stk-push",
+  "name": "lycash-server",
   "version": "1.0.0",
-  "description": "Simple M-Pesa STK Push integration using PalPluss API and Express",
+  "description": "LyCash Wallet Backend with PalPluss STK Integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "nodemon server.js"
   },
-  "keywords": [
-    "mpesa",
-    "stk-push",
-    "palpluss",
-    "payments",
-    "kenya"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "better-sqlite3": "^9.2.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
