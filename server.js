@@ -71,7 +71,7 @@ async function upsertUser(input = {}) {
   if (!phone) throw new Error('A valid phone number is required.');
   const id = phone;
   const now = new Date().toISOString();
-  
+
   await run(`INSERT INTO users (id,phone,name,email,country,receive_mode,till,paybill,account,channel_id,
     require_pin,use_biometrics,dark_theme,balance,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)
@@ -85,21 +85,21 @@ async function upsertUser(input = {}) {
     input.requirePin ? 1 : 0, input.useBiometrics ? 1 : 0,
     input.darkTheme ? 1 : 0, now, now
   ]);
-  
+
   return get('SELECT * FROM users WHERE id=?', id);
 }
 
 // ============================================================
-// FIXED: findTransaction now searches for transactionId in JSON fields
+// FIXED: findTransaction - searches for transactionId in JSON fields
 // ============================================================
 async function findTransaction(id) {
   if (!id) return null;
-  
+
   // First try direct column matches
   let row = await get('SELECT * FROM transactions WHERE tracking_id=?', id);
   if (!row) row = await get('SELECT * FROM transactions WHERE checkout_request_id=?', id);
   if (!row) row = await get('SELECT * FROM transactions WHERE reference=?', id);
-  
+
   // If still not found, search for transactionId inside palpluss_response JSON
   if (!row) {
     const rows = await all(
@@ -108,8 +108,25 @@ async function findTransaction(id) {
     );
     if (rows && rows.length > 0) row = rows[0];
   }
-  
-  // Also search in callback_data JSON (for older callbacks)
+
+  // Also search for external_reference in palpluss_response
+  if (!row) {
+    const rows = await all(
+      "SELECT * FROM transactions WHERE json_extract(palpluss_response, '$.external_reference') = ?",
+      id
+    );
+    if (rows && rows.length > 0) row = rows[0];
+  }
+
+  // Search in callback_data JSON
+  if (!row) {
+    const rows = await all(
+      "SELECT * FROM transactions WHERE json_extract(callback_data, '$.transaction.id') = ?",
+      id
+    );
+    if (rows && rows.length > 0) row = rows[0];
+  }
+
   if (!row) {
     const rows = await all(
       "SELECT * FROM transactions WHERE json_extract(callback_data, '$.transactionId') = ?",
@@ -117,16 +134,7 @@ async function findTransaction(id) {
     );
     if (rows && rows.length > 0) row = rows[0];
   }
-  
-  // Also search in palpluss_response for 'id' field (some APIs use this)
-  if (!row) {
-    const rows = await all(
-      "SELECT * FROM transactions WHERE json_extract(palpluss_response, '$.id') = ?",
-      id
-    );
-    if (rows && rows.length > 0) row = rows[0];
-  }
-  
+
   return row;
 }
 
@@ -141,17 +149,21 @@ function normalizePaymentStatus(input) {
   return 'UNKNOWN';
 }
 
+// ============================================================
+// FIXED: extractCallbackData - looks at body.transaction
+// ============================================================
 function extractCallbackData(body) {
-  const data = body.data || body.result || body.transaction || body.payload || body;
+  // The data is inside body.transaction for this webhook format
+  const data = body.transaction || body.data || body.result || body.payload || body;
   const result = {};
   const fields = {
-    trackingId: ['trackingId', 'tracking_id', 'merchantReference', 'reference'],
-    checkoutRequestId: ['checkoutRequestId', 'checkout_request_id', 'checkoutId', 'checkout_id'],
-    reference: ['reference', 'accountReference', 'account_reference'],
+    trackingId: ['trackingId', 'tracking_id', 'merchantReference', 'reference', 'external_reference'],
+    checkoutRequestId: ['checkoutRequestId', 'checkout_request_id', 'checkoutId', 'checkout_id', 'provider_checkout_id'],
+    reference: ['reference', 'accountReference', 'account_reference', 'external_reference'],
     amount: ['amount', 'Amount', 'transactionAmount'],
     status: ['status', 'Status', 'resultCode', 'result_code'],
-    resultDesc: ['resultDesc', 'result_desc', 'message', 'description'],
-    receiptNumber: ['receiptNumber', 'receipt_number', 'mpesaReceiptNumber', 'mpesa_receipt_number'],
+    resultDesc: ['resultDesc', 'result_desc', 'message', 'description', 'result_desc'],
+    receiptNumber: ['receiptNumber', 'receipt_number', 'mpesaReceiptNumber', 'mpesa_receipt_number', 'mpesa_receipt'],
     transactionId: ['transactionId', 'transaction_id', 'id']
   };
   for (const [key, aliases] of Object.entries(fields)) {
@@ -162,12 +174,23 @@ function extractCallbackData(body) {
       }
     }
   }
+
+  // Special handling for status codes
   if (result.status !== undefined && !isNaN(result.status)) {
     const code = Number(result.status);
     if (code === 0) result.status = 'SUCCESS';
     else if (code >= 1 && code <= 99) result.status = 'FAILED';
     else result.status = 'UNKNOWN';
   }
+
+  // If status is still not set, try using event_type
+  if (!result.status && body.event_type) {
+    const eventType = String(body.event_type).toUpperCase();
+    if (eventType.includes('SUCCESS')) result.status = 'SUCCESS';
+    else if (eventType.includes('FAIL')) result.status = 'FAILED';
+    else if (eventType.includes('PENDING')) result.status = 'PENDING';
+  }
+
   return result;
 }
 
@@ -208,7 +231,7 @@ app.post('/api/users/update', rateLimit(10, 60000), async (req, res) => {
     }
 
     const now = new Date().toISOString();
-    
+
     const result = await run(`UPDATE users SET 
       receive_mode = COALESCE(?, receive_mode),
       till = ?,
@@ -231,11 +254,11 @@ app.post('/api/users/update', rateLimit(10, 60000), async (req, res) => {
 
     const user = await get('SELECT * FROM users WHERE id=?', formattedPhone);
     console.log('[Update Profile] Channel ID reset for user:', formattedPhone);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Profile updated. Channel ID reset for new shortcode.',
-      user: await safeUser(user) 
+      user: await safeUser(user)
     });
 
   } catch (e) {
@@ -286,7 +309,8 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       phone: formattedPhone,
       amount: numericAmount,
       accountReference: reference,
-      transactionDesc: description
+      transactionDesc: description,
+      callbackUrl: `${getPublicBaseUrl(req)}/api/callback`
     };
 
     if (userChannelId) {
@@ -296,10 +320,7 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       console.log('[STK] No channel ID - PalPluss will register new shortcode');
     }
 
-    const callbackUrl = `${getPublicBaseUrl(req)}/api/callback`;
-    payload.callbackUrl = callbackUrl;
-
-    console.log('[STK] Callback URL:', callbackUrl);
+    console.log('[STK] Callback URL:', payload.callbackUrl);
 
     const response = await fetch('https://api.palpluss.com/v1/payments/stk', {
       method: 'POST',
@@ -336,7 +357,7 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
 
     await run(`INSERT INTO transactions (tracking_id,user_id,phone,amount,reference,description,status,checkout_request_id,palpluss_response,created_at,updated_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?)`, [
-      trackingId, walletUser.id, formattedPhone, numericAmount, reference, description, 
+      trackingId, walletUser.id, formattedPhone, numericAmount, reference, description,
       'PENDING', checkout, JSON.stringify(data), now, now
     ]);
 
@@ -349,7 +370,7 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       reference,
       phone: formattedPhone,
       amount: numericAmount,
-      callbackUrl,
+      callbackUrl: payload.callbackUrl,
       channelId: userChannelId || null,
       data
     });
@@ -369,7 +390,7 @@ app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
     if (callbackSecret) {
       const supplied = req.get('x-palpluss-callback-secret') || req.get('authorization')?.replace(/^Bearer\s+/i, '');
       if (!supplied || supplied.length !== callbackSecret.length ||
-          !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(callbackSecret))) {
+        !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(callbackSecret))) {
         console.warn('[CALLBACK] Unauthorized callback attempt');
         return res.status(401).json({ success: false, message: 'Unauthorized callback.' });
       }
@@ -391,10 +412,17 @@ app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
 
     // Try to find the transaction using any available identifier
     let row = null;
+
+    // First try direct identifiers
     if (extracted.trackingId) row = await findTransaction(extracted.trackingId);
     if (!row && extracted.checkoutRequestId) row = await findTransaction(extracted.checkoutRequestId);
     if (!row && extracted.reference) row = await findTransaction(extracted.reference);
     if (!row && extracted.transactionId) row = await findTransaction(extracted.transactionId);
+
+    // Also try using external_reference from the transaction object
+    if (!row && body.transaction?.external_reference) {
+      row = await findTransaction(body.transaction.external_reference);
+    }
 
     // If still not found, log the full body for debugging
     if (!row) {
@@ -424,6 +452,12 @@ app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
 
     const now = new Date().toISOString();
 
+    // Get receipt number from various possible locations
+    const receiptNumber = extracted.receiptNumber ||
+      body.transaction?.mpesa_receipt ||
+      body.mpesaReceiptNumber ||
+      null;
+
     await run(`UPDATE transactions SET 
       status=?,
       callback_data=?,
@@ -432,10 +466,10 @@ app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
       updated_at=?
       WHERE tracking_id=?`, [
       incomingStatus === 'SUCCESS' ? 'SUCCESS' :
-      incomingStatus === 'FAILED' ? 'FAILED' : 'PENDING',
+        incomingStatus === 'FAILED' ? 'FAILED' : 'PENDING',
       JSON.stringify(body),
-      extracted.receiptNumber || body.receiptNumber || body.mpesaReceiptNumber || null,
-      extracted.resultDesc || body.resultDesc || body.message || null,
+      receiptNumber,
+      extracted.resultDesc || body.resultDesc || body.transaction?.result_desc || null,
       now,
       row.tracking_id
     ]);
