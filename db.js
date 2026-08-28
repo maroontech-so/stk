@@ -1,153 +1,271 @@
 const fs = require('fs');
 const path = require('path');
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 
 const dataDir = path.join(__dirname, 'data');
 const databasePath = process.env.DATABASE_PATH || path.join(dataDir, 'lycash.db');
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
-const db = new Database(databasePath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// Use sqlite3 instead of better-sqlite3
+const db = new sqlite3.Database(databasePath);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS schema_migrations (
-    version INTEGER PRIMARY KEY,
-    applied_at TEXT NOT NULL
-  );
-  
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    phone TEXT NOT NULL UNIQUE,
-    name TEXT,
-    email TEXT,
-    country TEXT,
-    receive_mode TEXT,
-    till TEXT,
-    paybill TEXT,
-    account TEXT,
-    channel_id TEXT,
-    require_pin INTEGER NOT NULL DEFAULT 0,
-    use_biometrics INTEGER NOT NULL DEFAULT 0,
-    dark_theme INTEGER NOT NULL DEFAULT 0,
-    balance REAL NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-  
-  CREATE TABLE IF NOT EXISTS transactions (
-    tracking_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
-    phone TEXT NOT NULL,
-    amount REAL NOT NULL,
-    reference TEXT,
-    description TEXT,
-    status TEXT NOT NULL,
-    checkout_request_id TEXT,
-    palpluss_response TEXT,
-    callback_data TEXT,
-    receipt_number TEXT,
-    result_desc TEXT,
-    balance_applied INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-  
-  CREATE INDEX IF NOT EXISTS idx_transactions_user_created
-    ON transactions(user_id, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_transactions_checkout
-    ON transactions(checkout_request_id);
-  CREATE INDEX IF NOT EXISTS idx_transactions_reference
-    ON transactions(reference);
-  CREATE INDEX IF NOT EXISTS idx_users_channel
-    ON users(channel_id);
-`);
+// Enable WAL mode and foreign keys
+db.run('PRAGMA journal_mode = WAL');
+db.run('PRAGMA foreign_keys = ON');
+
+// Helper to run queries with promises
+function run(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes, lastID: this.lastID });
+    });
+  });
+}
+
+function get(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+}
+
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
 
 // ============================================================
-// MIGRATION: Add channel_id column if it doesn't exist
+// MIGRATION: Add channel_id column BEFORE creating tables
 // ============================================================
 function ensureChannelIdColumn() {
+  return new Promise((resolve) => {
+    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", (err, tableCheck) => {
+      if (tableCheck) {
+        db.get("SELECT channel_id FROM users LIMIT 1", (err) => {
+          if (err) {
+            console.log('[Migration] Adding channel_id column to users table...');
+            db.run('ALTER TABLE users ADD COLUMN channel_id TEXT', () => {
+              console.log('[Migration] channel_id column added successfully.');
+              resolve();
+            });
+          } else {
+            console.log('[Migration] channel_id column already exists.');
+            resolve();
+          }
+        });
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+// ============================================================
+// CREATE TABLES
+// ============================================================
+function createTables() {
+  return new Promise((resolve, reject) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        applied_at TEXT NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        phone TEXT NOT NULL UNIQUE,
+        name TEXT,
+        email TEXT,
+        country TEXT,
+        receive_mode TEXT,
+        till TEXT,
+        paybill TEXT,
+        account TEXT,
+        channel_id TEXT,
+        require_pin INTEGER NOT NULL DEFAULT 0,
+        use_biometrics INTEGER NOT NULL DEFAULT 0,
+        dark_theme INTEGER NOT NULL DEFAULT 0,
+        balance REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS transactions (
+        tracking_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        phone TEXT NOT NULL,
+        amount REAL NOT NULL,
+        reference TEXT,
+        description TEXT,
+        status TEXT NOT NULL,
+        checkout_request_id TEXT,
+        palpluss_response TEXT,
+        callback_data TEXT,
+        receipt_number TEXT,
+        result_desc TEXT,
+        balance_applied INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_transactions_user_created
+        ON transactions(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_transactions_checkout
+        ON transactions(checkout_request_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_reference
+        ON transactions(reference);
+      CREATE INDEX IF NOT EXISTS idx_users_channel
+        ON users(channel_id);
+    `, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+// ============================================================
+// LEGACY JSON MIGRATION
+// ============================================================
+function migrateLegacyJson() {
+  return new Promise((resolve) => {
+    get("SELECT 1 FROM schema_migrations WHERE version = 1").then((migration) => {
+      if (migration) { resolve(); return; }
+      
+      const legacyPath = path.join(dataDir, 'lycash-db.json');
+      let legacy;
+      try { legacy = JSON.parse(fs.readFileSync(legacyPath, 'utf8')); } catch { legacy = null; }
+      
+      if (!legacy || !legacy.users || Object.keys(legacy.users).length === 0) {
+        run('INSERT INTO schema_migrations VALUES (1, ?)', [new Date().toISOString()]).then(resolve);
+        return;
+      }
+      
+      const now = new Date().toISOString();
+      const migrate = async () => {
+        for (const user of Object.values(legacy.users || {})) {
+          await run(`INSERT OR IGNORE INTO users
+            (id, phone, name, email, country, receive_mode, till, paybill, account, channel_id,
+             require_pin, use_biometrics, dark_theme, balance, created_at, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [
+            user.id,
+            user.phone || user.id,
+            user.name || null,
+            user.email || null,
+            user.country || null,
+            user.receiveMode || null,
+            user.till || null,
+            user.paybill || null,
+            user.account || null,
+            user.channelId || null,
+            user.requirePin ? 1 : 0,
+            user.useBiometrics ? 1 : 0,
+            user.darkTheme ? 1 : 0,
+            Number(user.balance) || 0,
+            user.createdAt || now,
+            user.updatedAt || now
+          ]);
+        }
+        for (const tx of legacy.transactions || []) {
+          await run(`INSERT OR IGNORE INTO transactions
+            (tracking_id,user_id,phone,amount,reference,description,status,checkout_request_id,
+             palpluss_response,callback_data,receipt_number,result_desc,balance_applied,created_at,updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [
+            tx.trackingId,
+            tx.userId,
+            tx.phone,
+            Number(tx.amount) || 0,
+            tx.reference || null,
+            tx.description || null,
+            tx.status || 'PENDING',
+            tx.checkoutRequestId || null,
+            JSON.stringify(tx.palplussResponse || null),
+            JSON.stringify(tx.callbackData || null),
+            tx.receiptNumber || null,
+            tx.resultDesc || null,
+            tx.balanceApplied ? 1 : 0,
+            tx.createdAt || now,
+            tx.updatedAt || now
+          ]);
+        }
+        await run('INSERT INTO schema_migrations VALUES (1, ?)', [now]);
+      };
+      migrate().then(resolve).catch(() => resolve());
+    }).catch(() => resolve());
+  });
+}
+
+// Initialize database
+async function initDb() {
   try {
-    // Check if column exists by trying to select it
-    db.prepare('SELECT channel_id FROM users LIMIT 1').get();
-  } catch (e) {
-    // Column doesn't exist, add it
-    console.log('[Migration] Adding channel_id column to users table...');
-    db.exec('ALTER TABLE users ADD COLUMN channel_id TEXT');
-    console.log('[Migration] channel_id column added successfully.');
+    await ensureChannelIdColumn();
+    await createTables();
+    await migrateLegacyJson();
+    console.log('[Database] Initialized successfully.');
+  } catch (err) {
+    console.error('[Database] Error:', err);
   }
 }
-ensureChannelIdColumn();
 
-function migrateLegacyJson() {
-  const migration = db.prepare('SELECT 1 FROM schema_migrations WHERE version = 1').get();
-  if (migration) return;
-  
-  const legacyPath = path.join(dataDir, 'lycash-db.json');
-  let legacy;
-  try { legacy = JSON.parse(fs.readFileSync(legacyPath, 'utf8')); } catch { legacy = null; }
-  
-  const now = new Date().toISOString();
-  const insertUser = db.prepare(`
-    INSERT OR IGNORE INTO users
-      (id, phone, name, email, country, receive_mode, till, paybill, account, channel_id,
-       require_pin, use_biometrics, dark_theme, balance, created_at, updated_at)
-    VALUES (@id,@phone,@name,@email,@country,@receiveMode,@till,@paybill,@account,@channelId,
-      @requirePin,@useBiometrics,@darkTheme,@balance,@createdAt,@updatedAt)
-  `);
-  const insertTx = db.prepare(`
-    INSERT OR IGNORE INTO transactions
-      (tracking_id,user_id,phone,amount,reference,description,status,checkout_request_id,
-       palpluss_response,callback_data,receipt_number,result_desc,balance_applied,created_at,updated_at)
-    VALUES (@trackingId,@userId,@phone,@amount,@reference,@description,@status,@checkoutRequestId,
-      @palplussResponse,@callbackData,@receiptNumber,@resultDesc,@balanceApplied,@createdAt,@updatedAt)
-  `);
-  
-  const migrate = db.transaction(() => {
-    for (const user of Object.values(legacy?.users || {})) {
-      insertUser.run({
-        id: user.id,
-        phone: user.phone || user.id,
-        name: user.name || null,
-        email: user.email || null,
-        country: user.country || null,
-        receiveMode: user.receiveMode || null,
-        till: user.till || null,
-        paybill: user.paybill || null,
-        account: user.account || null,
-        channelId: user.channelId || null,
-        requirePin: user.requirePin ? 1 : 0,
-        useBiometrics: user.useBiometrics ? 1 : 0,
-        darkTheme: user.darkTheme ? 1 : 0,
-        balance: Number(user.balance) || 0,
-        createdAt: user.createdAt || now,
-        updatedAt: user.updatedAt || now
+// Wrapper functions for better-sqlite3 style
+function prepare(sql) {
+  return {
+    get: (params) => {
+      return new Promise((resolve, reject) => {
+        db.get(sql, params || [], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    },
+    all: (params) => {
+      return new Promise((resolve, reject) => {
+        db.all(sql, params || [], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+    },
+    run: (params) => {
+      return new Promise((resolve, reject) => {
+        db.run(sql, params || [], function(err) {
+          if (err) reject(err);
+          else resolve({ changes: this.changes, lastID: this.lastID });
+        });
       });
     }
-    for (const tx of legacy?.transactions || []) {
-      insertTx.run({
-        trackingId: tx.trackingId,
-        userId: tx.userId,
-        phone: tx.phone,
-        amount: Number(tx.amount) || 0,
-        reference: tx.reference || null,
-        description: tx.description || null,
-        status: tx.status || 'PENDING',
-        checkoutRequestId: tx.checkoutRequestId || null,
-        palplussResponse: JSON.stringify(tx.palplussResponse || null),
-        callbackData: JSON.stringify(tx.callbackData || null),
-        receiptNumber: tx.receiptNumber || null,
-        resultDesc: tx.resultDesc || null,
-        balanceApplied: tx.balanceApplied ? 1 : 0,
-        createdAt: tx.createdAt || now,
-        updatedAt: tx.updatedAt || now
-      });
-    }
-    db.prepare('INSERT INTO schema_migrations VALUES (1, ?)').run(now);
-  });
-  migrate();
+  };
 }
-migrateLegacyJson();
+
+function transaction(fn) {
+  return function(...args) {
+    return new Promise((resolve, reject) => {
+      db.run('BEGIN TRANSACTION', (err) => {
+        if (err) { reject(err); return; }
+        try {
+          const result = fn(...args);
+          db.run('COMMIT', (err2) => {
+            if (err2) {
+              db.run('ROLLBACK');
+              reject(err2);
+            } else {
+              resolve(result);
+            }
+          });
+        } catch (e) {
+          db.run('ROLLBACK');
+          reject(e);
+        }
+      });
+    });
+  };
+}
 
 function parseTransaction(row) {
   if (!row) return row;
@@ -170,4 +288,15 @@ function parseTransaction(row) {
   };
 }
 
-module.exports = { db, parseTransaction };
+// Initialize
+initDb();
+
+module.exports = { 
+  db, 
+  parseTransaction,
+  get,
+  all,
+  run,
+  prepare,
+  transaction
+};
