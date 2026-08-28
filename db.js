@@ -6,16 +6,15 @@ const dataDir = path.join(__dirname, 'data');
 const databasePath = process.env.DATABASE_PATH || path.join(dataDir, 'lycash.db');
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
-// Use sqlite3 instead of better-sqlite3
 const db = new sqlite3.Database(databasePath);
 
-// Enable WAL mode and foreign keys
 db.run('PRAGMA journal_mode = WAL');
 db.run('PRAGMA foreign_keys = ON');
 
-// Helper to run queries with promises
+// Helper functions with proper error handling
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
+    if (!Array.isArray(params)) params = [params];
     db.run(sql, params, function(err) {
       if (err) reject(err);
       else resolve({ changes: this.changes, lastID: this.lastID });
@@ -25,6 +24,7 @@ function run(sql, params = []) {
 
 function get(sql, params = []) {
   return new Promise((resolve, reject) => {
+    if (!Array.isArray(params)) params = [params];
     db.get(sql, params, (err, row) => {
       if (err) reject(err);
       else resolve(row);
@@ -34,36 +34,34 @@ function get(sql, params = []) {
 
 function all(sql, params = []) {
   return new Promise((resolve, reject) => {
+    if (!Array.isArray(params)) params = [params];
     db.all(sql, params, (err, rows) => {
       if (err) reject(err);
-      else resolve(rows);
+      else resolve(rows || []);
     });
   });
 }
 
 // ============================================================
-// MIGRATION: Add channel_id column BEFORE creating tables
+// MIGRATION: Add channel_id column
 // ============================================================
 function ensureChannelIdColumn() {
   return new Promise((resolve) => {
-    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", (err, tableCheck) => {
+    get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").then((tableCheck) => {
       if (tableCheck) {
-        db.get("SELECT channel_id FROM users LIMIT 1", (err) => {
-          if (err) {
-            console.log('[Migration] Adding channel_id column to users table...');
-            db.run('ALTER TABLE users ADD COLUMN channel_id TEXT', () => {
-              console.log('[Migration] channel_id column added successfully.');
-              resolve();
-            });
-          } else {
-            console.log('[Migration] channel_id column already exists.');
+        get("SELECT channel_id FROM users LIMIT 1").then(() => {
+          resolve();
+        }).catch(() => {
+          console.log('[Migration] Adding channel_id column to users table...');
+          run('ALTER TABLE users ADD COLUMN channel_id TEXT').then(() => {
+            console.log('[Migration] channel_id column added successfully.');
             resolve();
-          }
+          }).catch(() => resolve());
         });
       } else {
         resolve();
       }
-    });
+    }).catch(() => resolve());
   });
 }
 
@@ -201,40 +199,49 @@ function migrateLegacyJson() {
   });
 }
 
-// Initialize database
-async function initDb() {
-  try {
-    await ensureChannelIdColumn();
-    await createTables();
-    await migrateLegacyJson();
-    console.log('[Database] Initialized successfully.');
-  } catch (err) {
-    console.error('[Database] Error:', err);
-  }
-}
-
-// Wrapper functions for better-sqlite3 style
+// ============================================================
+// WRAPPER FUNCTIONS (better-sqlite3 style)
+// ============================================================
 function prepare(sql) {
+  // Get all params from the statement
+  const paramCount = (sql.match(/\?/g) || []).length;
+  
   return {
-    get: (params) => {
+    get: function(...args) {
+      let params = args;
+      if (args.length === 1 && Array.isArray(args[0])) params = args[0];
+      if (params.length < paramCount) {
+        // Pad with null for missing params
+        while (params.length < paramCount) params.push(null);
+      }
       return new Promise((resolve, reject) => {
-        db.get(sql, params || [], (err, row) => {
+        db.get(sql, params, (err, row) => {
           if (err) reject(err);
           else resolve(row);
         });
       });
     },
-    all: (params) => {
+    all: function(...args) {
+      let params = args;
+      if (args.length === 1 && Array.isArray(args[0])) params = args[0];
+      if (params.length < paramCount) {
+        while (params.length < paramCount) params.push(null);
+      }
       return new Promise((resolve, reject) => {
-        db.all(sql, params || [], (err, rows) => {
+        db.all(sql, params, (err, rows) => {
           if (err) reject(err);
-          else resolve(rows);
+          else resolve(rows || []);
         });
       });
     },
-    run: (params) => {
+    run: function(...args) {
+      let params = args;
+      if (args.length === 1 && Array.isArray(args[0])) params = args[0];
+      if (params.length < paramCount) {
+        while (params.length < paramCount) params.push(null);
+      }
       return new Promise((resolve, reject) => {
-        db.run(sql, params || [], function(err) {
+        db.run(sql, params, function(err) {
           if (err) reject(err);
           else resolve({ changes: this.changes, lastID: this.lastID });
         });
@@ -269,26 +276,41 @@ function transaction(fn) {
 
 function parseTransaction(row) {
   if (!row) return row;
-  return {
-    trackingId: row.tracking_id,
-    userId: row.user_id,
-    phone: row.phone,
-    amount: row.amount,
-    reference: row.reference,
-    description: row.description,
-    status: row.status,
-    checkoutRequestId: row.checkout_request_id,
-    palplussResponse: JSON.parse(row.palpluss_response || 'null'),
-    callbackData: JSON.parse(row.callback_data || 'null'),
-    receiptNumber: row.receipt_number,
-    resultDesc: row.result_desc,
-    balanceApplied: Boolean(row.balance_applied),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  };
+  try {
+    return {
+      trackingId: row.tracking_id,
+      userId: row.user_id,
+      phone: row.phone,
+      amount: row.amount,
+      reference: row.reference,
+      description: row.description,
+      status: row.status,
+      checkoutRequestId: row.checkout_request_id,
+      palplussResponse: JSON.parse(row.palpluss_response || 'null'),
+      callbackData: JSON.parse(row.callback_data || 'null'),
+      receiptNumber: row.receipt_number,
+      resultDesc: row.result_desc,
+      balanceApplied: Boolean(row.balance_applied),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  } catch {
+    return row;
+  }
 }
 
 // Initialize
+async function initDb() {
+  try {
+    await ensureChannelIdColumn();
+    await createTables();
+    await migrateLegacyJson();
+    console.log('[Database] Initialized successfully.');
+  } catch (err) {
+    console.error('[Database] Error:', err);
+  }
+}
+
 initDb();
 
 module.exports = { 

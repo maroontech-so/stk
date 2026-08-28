@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
-const { db, parseTransaction } = require('./db');
+const { db, parseTransaction, get, all, run, prepare, transaction } = require('./db');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -55,7 +55,7 @@ function authHeader(key) {
 
 function userId(phone) { return normalizePhoneNumber(phone) || 'guest'; }
 
-function safeUser(row) {
+async function safeUser(row) {
   if (!row) return null;
   return {
     id: row.id, phone: row.phone, name: row.name, email: row.email, country: row.country,
@@ -66,30 +66,34 @@ function safeUser(row) {
   };
 }
 
-function upsertUser(input = {}) {
+async function upsertUser(input = {}) {
   const phone = normalizePhoneNumber(input.phone);
   if (!phone) throw new Error('A valid phone number is required.');
   const id = phone;
   const now = new Date().toISOString();
-  db.prepare(`INSERT INTO users (id,phone,name,email,country,receive_mode,till,paybill,account,channel_id,
+  
+  await run(`INSERT INTO users (id,phone,name,email,country,receive_mode,till,paybill,account,channel_id,
     require_pin,use_biometrics,dark_theme,balance,created_at,updated_at)
-    VALUES (@id,@phone,@name,@email,@country,@receiveMode,@till,@paybill,@account,@channelId,
-    @requirePin,@useBiometrics,@darkTheme,0,@now,@now)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)
     ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,country=excluded.country,
     receive_mode=excluded.receive_mode,till=excluded.till,paybill=excluded.paybill,account=excluded.account,
     channel_id=COALESCE(excluded.channel_id, channel_id),
-    require_pin=excluded.require_pin,use_biometrics=excluded.use_biometrics,dark_theme=excluded.dark_theme,updated_at=excluded.updated_at`).run({
-    id, phone, name: input.name || null, email: input.email || null, country: input.country || null,
-    receiveMode: input.receiveMode || null, till: input.till || null, paybill: input.paybill || null,
-    account: input.account || null, channelId: input.channelId || null,
-    requirePin: input.requirePin ? 1 : 0, useBiometrics: input.useBiometrics ? 1 : 0,
-    darkTheme: input.darkTheme ? 1 : 0, now
-  });
-  return db.prepare('SELECT * FROM users WHERE id=?').get(id);
+    require_pin=excluded.require_pin,use_biometrics=excluded.use_biometrics,dark_theme=excluded.dark_theme,updated_at=excluded.updated_at`, [
+    id, phone, input.name || null, input.email || null, input.country || null,
+    input.receiveMode || null, input.till || null, input.paybill || null,
+    input.account || null, input.channelId || null,
+    input.requirePin ? 1 : 0, input.useBiometrics ? 1 : 0,
+    input.darkTheme ? 1 : 0, now, now
+  ]);
+  
+  return get('SELECT * FROM users WHERE id=?', id);
 }
 
-function findTransaction(id) {
-  return db.prepare('SELECT * FROM transactions WHERE tracking_id=? OR checkout_request_id=? OR reference=? LIMIT 1').get(id, id, id);
+async function findTransaction(id) {
+  let row = await get('SELECT * FROM transactions WHERE tracking_id=?', id);
+  if (!row) row = await get('SELECT * FROM transactions WHERE checkout_request_id=?', id);
+  if (!row) row = await get('SELECT * FROM transactions WHERE reference=?', id);
+  return row;
 }
 
 function normalizePaymentStatus(input) {
@@ -150,18 +154,18 @@ function rateLimit(limit, windowMs) {
 // ROUTES
 // ============================================================
 
-app.post('/api/users/sync', rateLimit(30, 60000), (req, res) => {
+app.post('/api/users/sync', rateLimit(30, 60000), async (req, res) => {
   try {
-    const user = upsertUser(req.body.user || req.body);
-    const rows = db.prepare('SELECT * FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(user.id);
-    res.json({ success: true, user: safeUser(user), transactions: rows.map(parseTransaction) });
+    const user = await upsertUser(req.body.user || req.body);
+    const rows = await all('SELECT * FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 20', user.id);
+    const transactions = (rows || []).map(parseTransaction);
+    res.json({ success: true, user: await safeUser(user), transactions });
   } catch (e) {
     res.status(400).json({ success: false, message: e.message });
   }
 });
 
-// Update user profile - resets channel_id when shortcode changes
-app.post('/api/users/update', rateLimit(10, 60000), (req, res) => {
+app.post('/api/users/update', rateLimit(10, 60000), async (req, res) => {
   try {
     const { phone, receiveMode, till, paybill, account } = req.body;
     const formattedPhone = normalizePhoneNumber(phone);
@@ -171,34 +175,33 @@ app.post('/api/users/update', rateLimit(10, 60000), (req, res) => {
 
     const now = new Date().toISOString();
     
-    // RESET channel_id when shortcode changes so new one is fetched from PalPluss
-    const result = db.prepare(`UPDATE users SET 
+    const result = await run(`UPDATE users SET 
       receive_mode = COALESCE(?, receive_mode),
       till = ?,
       paybill = ?,
       account = ?,
       channel_id = NULL,
       updated_at = ?
-      WHERE id = ?`).run(
+      WHERE id = ?`, [
       receiveMode || null,
       till || null,
       paybill || null,
       account || null,
       now,
       formattedPhone
-    );
+    ]);
 
     if (result.changes === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id=?').get(formattedPhone);
+    const user = await get('SELECT * FROM users WHERE id=?', formattedPhone);
     console.log('[Update Profile] Channel ID reset for user:', formattedPhone);
     
     res.json({ 
       success: true, 
       message: 'Profile updated. Channel ID reset for new shortcode.',
-      user: safeUser(user) 
+      user: await safeUser(user) 
     });
 
   } catch (e) {
@@ -236,10 +239,9 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       return res.status(503).json({ success: false, message: 'PalPluss API is not configured.' });
     }
 
-    const walletUser = upsertUser({ ...(user || {}), phone: formattedPhone });
+    const walletUser = await upsertUser({ ...(user || {}), phone: formattedPhone });
 
-    // Get user's channel ID - will be NULL if shortcode was updated
-    const userRow = db.prepare('SELECT channel_id, receive_mode, till, paybill, account FROM users WHERE id=?').get(walletUser.id);
+    const userRow = await get('SELECT channel_id, receive_mode, till, paybill, account FROM users WHERE id=?', walletUser.id);
     let userChannelId = userRow?.channel_id || null;
 
     const reference = String(accountReference || `REF${Date.now().toString().slice(-6)}`).trim().slice(0, 64);
@@ -253,7 +255,6 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       transactionDesc: description
     };
 
-    // If channel ID exists, use it. If NULL, PalPluss will register new shortcode
     if (userChannelId) {
       payload.channelId = userChannelId;
       console.log('[STK] Using existing channel ID:', userChannelId);
@@ -261,7 +262,6 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       console.log('[STK] No channel ID - PalPluss will register new shortcode');
     }
 
-    // DYNAMIC CALLBACK URL
     const callbackUrl = `${getPublicBaseUrl(req)}/api/callback`;
     payload.callbackUrl = callbackUrl;
 
@@ -276,26 +276,35 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json().catch(() => ({}));
+    // Handle non-JSON responses
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error('[STK] Invalid JSON response:', text.substring(0, 200));
+      return res.status(502).json({ success: false, message: 'Invalid response from payment provider.' });
+    }
 
     if (!response.ok) {
       console.error('[STK] PalPluss error:', data);
       return res.status(502).json({ success: false, message: data.message || data.error || 'PalPluss request failed.' });
     }
 
-    // If PalPluss returns a channel ID, save it to the user
     const responseChannelId = data.channelId || data.channel_id || data.channelID;
     if (responseChannelId) {
       console.log('[STK] Saving channel ID from response:', responseChannelId);
-      db.prepare('UPDATE users SET channel_id = ? WHERE id = ?').run(responseChannelId, walletUser.id);
+      await run('UPDATE users SET channel_id = ? WHERE id = ?', responseChannelId, walletUser.id);
     }
 
     const now = new Date().toISOString();
     const checkout = data.checkoutRequestId || data.checkoutId || data.id || trackingId;
 
-    db.prepare(`INSERT INTO transactions (tracking_id,user_id,phone,amount,reference,description,status,checkout_request_id,palpluss_response,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(trackingId, walletUser.id, formattedPhone, numericAmount, reference, description, 'PENDING', checkout, JSON.stringify(data), now, now);
+    await run(`INSERT INTO transactions (tracking_id,user_id,phone,amount,reference,description,status,checkout_request_id,palpluss_response,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`, [
+      trackingId, walletUser.id, formattedPhone, numericAmount, reference, description, 
+      'PENDING', checkout, JSON.stringify(data), now, now
+    ]);
 
     console.log('[STK] Created trackingId:', trackingId);
 
@@ -317,7 +326,7 @@ app.post('/api/stk-push', rateLimit(10, 60000), async (req, res) => {
   }
 });
 
-app.post('/api/callback', rateLimit(60, 60000), (req, res) => {
+app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
   const callbackStart = Date.now();
   try {
     console.log('[CALLBACK] Received at:', new Date().toISOString());
@@ -346,10 +355,10 @@ app.post('/api/callback', rateLimit(60, 60000), (req, res) => {
     });
 
     let row = null;
-    if (extracted.trackingId) row = findTransaction(extracted.trackingId);
-    if (!row && extracted.checkoutRequestId) row = findTransaction(extracted.checkoutRequestId);
-    if (!row && extracted.reference) row = findTransaction(extracted.reference);
-    if (!row && extracted.transactionId) row = findTransaction(extracted.transactionId);
+    if (extracted.trackingId) row = await findTransaction(extracted.trackingId);
+    if (!row && extracted.checkoutRequestId) row = await findTransaction(extracted.checkoutRequestId);
+    if (!row && extracted.reference) row = await findTransaction(extracted.reference);
+    if (!row && extracted.transactionId) row = await findTransaction(extracted.transactionId);
 
     if (!row) {
       console.log('[CALLBACK] No matching transaction found for:', extracted);
@@ -358,13 +367,12 @@ app.post('/api/callback', rateLimit(60, 60000), (req, res) => {
 
     console.log('[CALLBACK] Found transaction:', row.tracking_id, 'current status:', row.status);
 
-    // If PalPluss returns a channel ID in the callback, save it
     const callbackChannelId = body.channelId || body.channel_id || body.channelID;
     if (callbackChannelId && row.user_id) {
-      const user = db.prepare('SELECT channel_id FROM users WHERE id=?').get(row.user_id);
+      const user = await get('SELECT channel_id FROM users WHERE id=?', row.user_id);
       if (!user?.channel_id) {
         console.log('[CALLBACK] Saving channel ID from callback:', callbackChannelId);
-        db.prepare('UPDATE users SET channel_id = ? WHERE id = ?').run(callbackChannelId, row.user_id);
+        await run('UPDATE users SET channel_id = ? WHERE id = ?', callbackChannelId, row.user_id);
       }
     }
 
@@ -378,37 +386,33 @@ app.post('/api/callback', rateLimit(60, 60000), (req, res) => {
 
     const now = new Date().toISOString();
 
-    const update = db.transaction(() => {
-      db.prepare(`UPDATE transactions SET 
-        status=?,
-        callback_data=?,
-        receipt_number=?,
-        result_desc=?,
-        updated_at=?
-        WHERE tracking_id=?`)
-        .run(
-          incomingStatus === 'SUCCESS' ? 'SUCCESS' :
-          incomingStatus === 'FAILED' ? 'FAILED' : 'PENDING',
-          JSON.stringify(body),
-          extracted.receiptNumber || body.receiptNumber || body.mpesaReceiptNumber || null,
-          extracted.resultDesc || body.resultDesc || body.message || null,
-          now,
-          row.tracking_id
-        );
+    await run(`UPDATE transactions SET 
+      status=?,
+      callback_data=?,
+      receipt_number=?,
+      result_desc=?,
+      updated_at=?
+      WHERE tracking_id=?`, [
+      incomingStatus === 'SUCCESS' ? 'SUCCESS' :
+      incomingStatus === 'FAILED' ? 'FAILED' : 'PENDING',
+      JSON.stringify(body),
+      extracted.receiptNumber || body.receiptNumber || body.mpesaReceiptNumber || null,
+      extracted.resultDesc || body.resultDesc || body.message || null,
+      now,
+      row.tracking_id
+    ]);
 
-      if (incomingStatus === 'SUCCESS' && !row.balance_applied) {
+    if (incomingStatus === 'SUCCESS') {
+      const checkApplied = await get('SELECT balance_applied FROM transactions WHERE tracking_id=?', row.tracking_id);
+      if (!checkApplied?.balance_applied) {
         console.log('[CALLBACK] Crediting wallet:', row.amount, 'for user:', row.user_id);
-        db.prepare('UPDATE users SET balance=balance+?,updated_at=? WHERE id=?')
-          .run(row.amount, now, row.user_id);
-        db.prepare('UPDATE transactions SET balance_applied=1 WHERE tracking_id=?')
-          .run(row.tracking_id);
+        await run('UPDATE users SET balance=balance+?,updated_at=? WHERE id=?', row.amount, now, row.user_id);
+        await run('UPDATE transactions SET balance_applied=1 WHERE tracking_id=?', row.tracking_id);
         console.log('[CALLBACK] Wallet credited successfully.');
-      } else if (incomingStatus === 'SUCCESS' && row.balance_applied) {
+      } else {
         console.log('[CALLBACK] Balance already applied, skipping credit.');
       }
-    });
-
-    update();
+    }
 
     console.log('[CALLBACK] Processed in:', Date.now() - callbackStart, 'ms');
 
@@ -426,12 +430,12 @@ app.post('/api/callback', rateLimit(60, 60000), (req, res) => {
   }
 });
 
-app.get('/api/status/:id', rateLimit(60, 60000), (req, res) => {
-  const row = findTransaction(req.params.id);
+app.get('/api/status/:id', rateLimit(60, 60000), async (req, res) => {
+  const row = await findTransaction(req.params.id);
   if (!row) {
     return res.status(404).json({ success: false, message: 'Transaction not found.' });
   }
-  const user = db.prepare('SELECT balance FROM users WHERE id=?').get(row.user_id);
+  const user = await get('SELECT balance FROM users WHERE id=?', row.user_id);
   res.json({
     success: true,
     trackingId: row.tracking_id,
@@ -447,12 +451,12 @@ app.get('/api/status/:id', rateLimit(60, 60000), (req, res) => {
   });
 });
 
-app.get('/api/transactions', rateLimit(60, 60000), (req, res) => {
+app.get('/api/transactions', rateLimit(60, 60000), async (req, res) => {
   const id = req.query.userId ? userId(req.query.userId) : null;
   const rows = id
-    ? db.prepare('SELECT * FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(id)
-    : db.prepare('SELECT * FROM transactions ORDER BY created_at DESC LIMIT 20').all();
-  res.json({ success: true, transactions: rows.map(parseTransaction) });
+    ? await all('SELECT * FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 20', id)
+    : await all('SELECT * FROM transactions ORDER BY created_at DESC LIMIT 20');
+  res.json({ success: true, transactions: (rows || []).map(parseTransaction) });
 });
 
 app.use((err, req, res, next) => {
