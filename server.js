@@ -89,10 +89,44 @@ async function upsertUser(input = {}) {
   return get('SELECT * FROM users WHERE id=?', id);
 }
 
+// ============================================================
+// FIXED: findTransaction now searches for transactionId in JSON fields
+// ============================================================
 async function findTransaction(id) {
+  if (!id) return null;
+  
+  // First try direct column matches
   let row = await get('SELECT * FROM transactions WHERE tracking_id=?', id);
   if (!row) row = await get('SELECT * FROM transactions WHERE checkout_request_id=?', id);
   if (!row) row = await get('SELECT * FROM transactions WHERE reference=?', id);
+  
+  // If still not found, search for transactionId inside palpluss_response JSON
+  if (!row) {
+    const rows = await all(
+      "SELECT * FROM transactions WHERE json_extract(palpluss_response, '$.transactionId') = ?",
+      id
+    );
+    if (rows && rows.length > 0) row = rows[0];
+  }
+  
+  // Also search in callback_data JSON (for older callbacks)
+  if (!row) {
+    const rows = await all(
+      "SELECT * FROM transactions WHERE json_extract(callback_data, '$.transactionId') = ?",
+      id
+    );
+    if (rows && rows.length > 0) row = rows[0];
+  }
+  
+  // Also search in palpluss_response for 'id' field (some APIs use this)
+  if (!row) {
+    const rows = await all(
+      "SELECT * FROM transactions WHERE json_extract(palpluss_response, '$.id') = ?",
+      id
+    );
+    if (rows && rows.length > 0) row = rows[0];
+  }
+  
   return row;
 }
 
@@ -348,20 +382,24 @@ app.post('/api/callback', rateLimit(60, 60000), async (req, res) => {
       trackingId: extracted.trackingId,
       checkoutRequestId: extracted.checkoutRequestId,
       reference: extracted.reference,
+      transactionId: extracted.transactionId,
       status: extracted.status,
       amount: extracted.amount,
       resultDesc: extracted.resultDesc,
       receiptNumber: extracted.receiptNumber
     });
 
+    // Try to find the transaction using any available identifier
     let row = null;
     if (extracted.trackingId) row = await findTransaction(extracted.trackingId);
     if (!row && extracted.checkoutRequestId) row = await findTransaction(extracted.checkoutRequestId);
     if (!row && extracted.reference) row = await findTransaction(extracted.reference);
     if (!row && extracted.transactionId) row = await findTransaction(extracted.transactionId);
 
+    // If still not found, log the full body for debugging
     if (!row) {
-      console.log('[CALLBACK] No matching transaction found for:', extracted);
+      console.log('[CALLBACK] No matching transaction found. Full body:', JSON.stringify(body, null, 2));
+      console.log('[CALLBACK] Extracted data:', extracted);
       return res.json({ success: true, message: 'Callback received, but no matching transaction.' });
     }
 
